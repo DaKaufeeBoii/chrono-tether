@@ -1,7 +1,8 @@
 # ⏳ CHRONO TETHER: LAST RECORD OF THE NOMOS
 **A Dual-Timeline Sci-Fi Action-Adventure & Emotional Thriller**  
 *Developed for the Game Arena Hackathon*  
-*Engine:* Pure HTML5 Canvas + Web Audio API (Zero External Asset Dependencies, Runs 100% Offline in Any Browser)
+*Engine:* Pure HTML5 Canvas + Web Audio API (Zero External Asset Dependencies, Runs 100% Offline in Any Browser)  
+🎮 **Live Web Demo:** [https://dakaufeeboii.github.io/game-arena/](https://dakaufeeboii.github.io/game-arena/)
 
 ---
 
