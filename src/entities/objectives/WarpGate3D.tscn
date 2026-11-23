@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3 uid="uid://cwarpgate3d01"]
+
+[ext_resource type="Script" path="res://src/entities/objectives/WarpGate3D.gd" id="1_gate"]
+
+[sub_resource type="CylinderShape3D" id="GateShape3D_1"]
+height = 3.0
+radius = 2.2
+
+[sub_resource type="StandardMaterial3D" id="GateMaterial"]
+albedo_color = Color(0.1, 0.9, 1, 1)
+metallic = 0.5
+roughness = 0.1
+emission_enabled = true
+emission = Color(0.2, 0.85, 1, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="TorusMesh" id="GateMesh_1"]
+material = SubResource("GateMaterial")
+inner_radius = 1.8
+outer_radius = 2.4
+
+[node name="WarpGate3D" type="Area3D"]
+collision_layer = 1
+collision_mask = 2
+script = ExtResource("1_gate")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("GateShape3D_1")
+
+[node name="RingMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 1, 0)
+mesh = SubResource("GateMesh_1")

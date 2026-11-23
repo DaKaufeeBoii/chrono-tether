@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://c20o3pywulcd5"]
+
+[ext_resource type="Script" path="res://src/ui/SettingsMenu.gd" id="1_settings"]
+
+[node name="SettingsMenu" type="PanelContainer"]
+custom_minimum_size = Vector2(420, 320)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -160.0
+offset_right = 210.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_font_sizes/font_size = 20
+text = "AUDIO & DISPLAY SETTINGS"
+horizontal_alignment = 1
+
+[node name="AudioGrid" type="GridContainer" parent="VBox"]
+layout_mode = 2
+columns = 2
+
+[node name="MasterLabel" type="Label" parent="VBox/AudioGrid"]
+layout_mode = 2
+text = "Master Volume:"
+
+[node name="MasterSlider" type="HSlider" parent="VBox/AudioGrid"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+value = 85.0
+
+[node name="SFXLabel" type="Label" parent="VBox/AudioGrid"]
+layout_mode = 2
+text = "SFX Volume:"
+
+[node name="SFXSlider" type="HSlider" parent="VBox/AudioGrid"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+value = 90.0
+
+[node name="HSeparator" type="HSeparator" parent="VBox"]
+layout_mode = 2
+
+[node name="DisplayGrid" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="FullscreenCheck" type="CheckBox" parent="VBox/DisplayGrid"]
+layout_mode = 2
+text = "Enable Fullscreen Mode"
+
+[node name="VsyncCheck" type="CheckBox" parent="VBox/DisplayGrid"]
+layout_mode = 2
+button_pressed = true
+text = "Enable V-Sync (Smooth 60/120Hz)"
+
+[node name="BtnClose" type="Button" parent="VBox"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "APPLY & CLOSE"

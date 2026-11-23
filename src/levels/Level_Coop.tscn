@@ -1,0 +1,60 @@
+[gd_scene load_steps=8 format=3 uid="uid://clvlcoop01"]
+
+[ext_resource type="Script" path="res://src/levels/LevelController.gd" id="1_lvl"]
+[ext_resource type="PackedScene" path="res://src/environment/WallBorder.tscn" id="2_border"]
+[ext_resource type="Script" path="res://src/ui/CameraTracker.gd" id="3_cam"]
+[ext_resource type="PackedScene" path="res://src/ui/HUD.tscn" id="4_hud"]
+[ext_resource type="PackedScene" path="res://src/entities/drone/Drone.tscn" id="5_drone"]
+[ext_resource type="PackedScene" path="res://src/environment/BreakableWall.tscn" id="6_wall"]
+[ext_resource type="PackedScene" path="res://src/environment/ImpactSwitch.tscn" id="7_switch"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/Turret.tscn" id="8_turret"]
+
+[node name="Level_Coop" type="Node2D"]
+script = ExtResource("1_lvl")
+
+[node name="Background" type="ColorRect" parent="."]
+z_index = -10
+offset_left = -1200.0
+offset_top = -800.0
+offset_right = 1200.0
+offset_bottom = 800.0
+color = Color(0.06, 0.08, 0.11, 1)
+
+[node name="WallBorder" parent="." instance=ExtResource("2_border")]
+
+[node name="CameraTracker" type="Camera2D" parent="."]
+script = ExtResource("3_cam")
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]
+
+[node name="Drone_P1" parent="." groups=["drones"] instance=ExtResource("5_drone")]
+position = Vector2(-500, -100)
+player_id = 1
+
+[node name="Drone_P2" parent="." groups=["drones"] instance=ExtResource("5_drone")]
+position = Vector2(-500, 100)
+player_id = 2
+
+[node name="ImpactSwitch_A" parent="." instance=ExtResource("7_switch")]
+position = Vector2(-150, -300)
+
+[node name="ImpactSwitch_B" parent="." instance=ExtResource("7_switch")]
+position = Vector2(-150, 300)
+
+[node name="BreakableWall_1" parent="." instance=ExtResource("6_wall")]
+position = Vector2(0, -150)
+
+[node name="BreakableWall_2" parent="." instance=ExtResource("6_wall")]
+position = Vector2(0, 0)
+
+[node name="BreakableWall_3" parent="." instance=ExtResource("6_wall")]
+position = Vector2(0, 150)
+
+[node name="Turret_1" parent="." instance=ExtResource("8_turret")]
+position = Vector2(400, -220)
+
+[node name="Turret_2" parent="." instance=ExtResource("8_turret")]
+position = Vector2(550, 0)
+
+[node name="Turret_3" parent="." instance=ExtResource("8_turret")]
+position = Vector2(400, 220)

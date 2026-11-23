@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHRONO TETHER: LAST RECORD OF THE NOMOS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- 1. Primary Render Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 2. Cyber HUD Overlay -->
+    <div id="hudOverlay">
+        <!-- Top HUD -->
+        <div class="hud-top">
+            <!-- Player Stats: HP & Energy -->
+            <div class="hud-stats-group">
+                <div class="stat-row">
+                    <span class="stat-label">HULL HP</span>
+                    <div class="bar-container">
+                        <div id="hpBar" class="bar-fill" style="width: 100%;"></div>
+                    </div>
+                    <span id="hpVal" class="stat-value">100</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">CHRONO</span>
+                    <div class="bar-container">
+                        <div id="energyBar" class="bar-fill" style="width: 100%;"></div>
+                    </div>
+                    <span id="energyVal" class="stat-value">100</span>
+                </div>
+            </div>
+
+            <!-- Active Timeline Badge -->
+            <div class="timeline-badge-container">
+                <div id="timelineBadge" class="timeline-past">T-0 : PRISTINE PAST</div>
+                <div class="shift-prompt">[SPACE] or [RIGHT CLICK] TO PHASE-SHIFT</div>
+            </div>
+
+            <!-- Right Controls & Objective Tracker Group -->
+            <div class="hud-right-group">
+                <button id="audioToggleBtn" title="Toggle Sound">🔊 AUDIO: ON</button>
+                <div class="objective-container">
+                    <div class="objective-header">CURRENT DIRECTIVE</div>
+                    <div id="objectiveText">Initializing UNIT-7 chassis...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boss Health Bar (Appears in Sector 3) -->
+        <div id="bossHealthContainer">
+            <div class="boss-title">PARADOX NEXUS // TEMPORAL ANOMALY</div>
+            <div class="boss-bar-bg">
+                <div id="bossHpFill"></div>
+            </div>
+        </div>
+
+        <!-- Controls Hint -->
+        <div class="controls-hint">
+            <strong>CONTROLS:</strong> [WASD] Move | [MOUSE] Aim | [LEFT CLICK] Shoot (Hold to Charge)<br>
+            [SPACE / RIGHT CLICK] Phase Shift | [SHIFT / F] Thruster Dash | [E] Terminal / Next
+        </div>
+    </div>
+
+    <!-- 3. Dialogue / Comms Window -->
+    <div id="dialogueBox">
+        <div class="dialogue-header">
+            <span id="dialogueSender" class="dialogue-sender">COMM TRANSMISSION</span>
+            <span class="dialogue-prompt">[CLICK / E / SPACE TO ADVANCE]</span>
+        </div>
+        <div id="dialogueBody" class="dialogue-body">...</div>
+    </div>
+
+    <!-- 4. Title / Start Screen -->
+    <div id="startScreen" class="modal-screen">
+        <h1 class="cyber-title">CHRONO TETHER</h1>
+        <h2 class="cyber-subtitle">LAST RECORD OF THE NOMOS</h2>
+        
+        <div class="lore-brief">
+            <strong>YEAR 2394 // THE EVENT HORIZON:</strong><br>
+            The colony generation ship <em>U.S.S. Nomos</em> has collided with micro-singularity Null-7, fracturing local spacetime into two overlapping realities:<br><br>
+            • <strong style="color: #00f0ff;">T-0 (The Pristine Past):</strong> Intact corridors, automated defense sentries, locked titanium blast doors, armed laser grids.<br>
+            • <strong style="color: #d900ff;">T+60 (The Ruined Void):</strong> Decayed metal ruins, cosmic void wraiths, breached walls, broken bulkheads.<br><br>
+            You are <strong>UNIT-7</strong>, equipped with a <strong>Chronal Tether</strong> that allows you to instantly phase between both timelines. Bypass security in one timeline to traverse the ruins in the other. Reach the Singularity Core and rescue Cryo-Chamber #404 before the ship is swallowed into oblivion!
+        </div>
+
+        <div class="menu-actions">
+            <button id="startBtn" class="cyber-btn">INITIALIZE NEURAL TETHER</button>
+        </div>
+    </div>
+
+    <!-- 5. Pause Screen -->
+    <div id="pauseScreen" class="modal-screen" style="display: none;">
+        <h2 class="cyber-title" style="font-size: 32px;">SYSTEM PAUSED</h2>
+        <div class="menu-actions">
+            <button id="resumeBtn" class="cyber-btn">RESUME MISSION</button>
+            <button id="restartBtn" class="cyber-btn btn-magenta">RESTART SECTOR</button>
+        </div>
+    </div>
+
+    <!-- 6. Game Over Screen -->
+    <div id="gameOverScreen" class="modal-screen" style="display: none;">
+        <h2 class="cyber-title" style="color: #ff0055; -webkit-text-fill-color: #ff0055; text-shadow: 0 0 30px #ff0055;">TETHER SEVERED</h2>
+        <p class="cyber-subtitle" style="color: #ff5588;">UNIT-7 CHASSIS DESTROYED IN CHRONAL COLLAPSE</p>
+        <div class="menu-actions">
+            <button id="retryBtn" class="cyber-btn">REBOOT CHASSIS</button>
+        </div>
+    </div>
+
+    <!-- 7. Victory Screen -->
+    <div id="victoryScreen" class="modal-screen" style="display: none;">
+        <h2 class="cyber-title" style="color: #00ffaa; -webkit-text-fill-color: #00ffaa; text-shadow: 0 0 35px #00ffaa;">TIMELINE STABILIZED</h2>
+        <p class="cyber-subtitle">CRYO-POD #404 LAUNCHED TOWARDS GLIESE 667Cc</p>
+        
+        <div class="stats-summary">
+            <div class="summary-item">
+                <div id="statTime" class="summary-val">00:00</div>
+                <div class="summary-label">MISSION TIME</div>
+            </div>
+            <div class="summary-item">
+                <div id="statShifts" class="summary-val">0</div>
+                <div class="summary-label">PHASE SHIFTS</div>
+            </div>
+            <div class="summary-item">
+                <div id="statEnemies" class="summary-val">0</div>
+                <div class="summary-label">THREATS ELIMINATED</div>
+            </div>
+            <div class="summary-item">
+                <div id="statRank" class="summary-val" style="color: #00f0ff;">S-RANK</div>
+                <div class="summary-label">CHRONO ARCHIVIST RATING</div>
+            </div>
+        </div>
+
+        <div class="lore-brief" style="text-align: center;">
+            <em>"Rest now, Elena. Your daughter is safe under the light of a new sunrise."</em>
+        </div>
+
+        <div class="menu-actions">
+            <button id="playAgainBtn" class="cyber-btn">ENTER THE ARCHIVE AGAIN</button>
+        </div>
+    </div>
+
+    <!-- Scripts in logical execution order -->
+    <script src="js/audio.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/story.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+[gd_scene load_steps=8 format=3 uid="uid://creactorcore3d01"]
+
+[ext_resource type="Script" path="res://src/entities/objectives/ReactorCore3D.gd" id="1_core"]
+
+[sub_resource type="SphereShape3D" id="CoreShape3D_1"]
+radius = 1.5
+
+[sub_resource type="StandardMaterial3D" id="CoreMaterial"]
+albedo_color = Color(1, 0.4, 0.1, 1)
+metallic = 0.9
+roughness = 0.2
+emission_enabled = true
+emission = Color(1, 0.35, 0.05, 1)
+emission_energy_multiplier = 2.5
+
+[sub_resource type="SphereMesh" id="SphereMesh_1"]
+material = SubResource("CoreMaterial")
+radius = 1.4
+height = 2.8
+
+[sub_resource type="StandardMaterial3D" id="ArmorMaterial"]
+albedo_color = Color(0.2, 0.22, 0.28, 1)
+metallic = 0.85
+roughness = 0.3
+
+[sub_resource type="BoxMesh" id="ShieldPlateMesh"]
+material = SubResource("ArmorMaterial")
+size = Vector3(0.5, 1.8, 1.2)
+
+[node name="ReactorCore3D" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 6
+script = ExtResource("1_core")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CoreShape3D_1")
+
+[node name="CoreMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_1")
+
+[node name="ShieldRing" type="Node3D" parent="."]
+
+[node name="Plate1" type="MeshInstance3D" parent="ShieldRing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0, 0)
+mesh = SubResource("ShieldPlateMesh")
+
+[node name="Plate2" type="MeshInstance3D" parent="ShieldRing"]
+transform = Transform3D(-0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, -0.5, -1.1, 0, 1.9)
+mesh = SubResource("ShieldPlateMesh")
+
+[node name="Plate3" type="MeshInstance3D" parent="ShieldRing"]
+transform = Transform3D(-0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, -0.5, -1.1, 0, -1.9)
+mesh = SubResource("ShieldPlateMesh")

@@ -1,0 +1,13 @@
+# Godot 4+ cache & imports
+.godot/
+*.translation
+
+# Logs & temp
+logs/
+*.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://bvrwcco27xsqy"]
+
+[ext_resource type="Shader" path="res://src/shaders/hologram_grid.gdshader" id="1_holo"]
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial"]
+albedo_color = Color(0.08, 0.09, 0.12, 1)
+metallic = 0.8
+roughness = 0.35
+
+[sub_resource type="PlaneMesh" id="FloorMesh"]
+material = SubResource("FloorMaterial")
+size = Vector2(50, 36)
+
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(50, 0.4, 36)
+
+[sub_resource type="BoxShape3D" id="WallH_Shape"]
+size = Vector3(50, 4, 1)
+
+[sub_resource type="BoxShape3D" id="WallV_Shape"]
+size = Vector3(1, 4, 36)
+
+[sub_resource type="ShaderMaterial" id="HoloMaterial"]
+render_priority = 0
+shader = ExtResource("1_holo")
+shader_parameter/barrier_color = Color(0.1, 0.8, 1, 0.5)
+shader_parameter/grid_scale = 16.0
+shader_parameter/scan_speed = 2.0
+
+[sub_resource type="QuadMesh" id="HoloWallH"]
+material = SubResource("HoloMaterial")
+size = Vector2(50, 3)
+
+[sub_resource type="QuadMesh" id="HoloWallV"]
+material = SubResource("HoloMaterial")
+size = Vector2(36, 3)
+
+[node name="ArenaBounds3D" type="StaticBody3D"]
+collision_layer = 1
+collision_mask = 6
+
+[node name="FloorMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("FloorMesh")
+
+[node name="FloorCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
+shape = SubResource("FloorShape")
+
+[node name="WallNorth" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -18)
+shape = SubResource("WallH_Shape")
+
+[node name="HoloNorth" type="MeshInstance3D" parent="WallNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5)
+mesh = SubResource("HoloWallH")
+
+[node name="WallSouth" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 18)
+shape = SubResource("WallH_Shape")
+
+[node name="HoloSouth" type="MeshInstance3D" parent="WallSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.5)
+mesh = SubResource("HoloWallH")
+
+[node name="WallWest" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 1.5, 0)
+shape = SubResource("WallV_Shape")
+
+[node name="HoloWest" type="MeshInstance3D" parent="WallWest"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0.5, 0, 0)
+mesh = SubResource("HoloWallV")
+
+[node name="WallEast" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 1.5, 0)
+shape = SubResource("WallV_Shape")
+
+[node name="HoloEast" type="MeshInstance3D" parent="WallEast"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -0.5, 0, 0)
+mesh = SubResource("HoloWallV")

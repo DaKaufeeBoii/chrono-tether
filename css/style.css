@@ -1,0 +1,460 @@
+/**
+ * CHRONO TETHER: LAST RECORD OF THE NOMOS
+ * Cyberpunk HUD & Interface Styling
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@600;800;900&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #060913;
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    color: #e0f4ff;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    cursor: crosshair;
+    z-index: 1;
+}
+
+/* ==========================================
+   HUD OVERLAY
+========================================== */
+#hudOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.hud-stats-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(8, 16, 28, 0.75);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 12px 18px;
+    border-radius: 4px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-label {
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    width: 60px;
+    color: #00f0ff;
+    text-shadow: 0 0 6px #00f0ff;
+}
+
+.bar-container {
+    width: 180px;
+    height: 12px;
+    background: rgba(0, 20, 35, 0.8);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 100%;
+    transition: width 0.15s ease-out;
+}
+
+#hpBar {
+    background: linear-gradient(90deg, #00ff88, #00f0ff);
+    box-shadow: 0 0 10px #00f0ff;
+}
+
+#energyBar {
+    background: linear-gradient(90deg, #00a2ff, #d900ff);
+    box-shadow: 0 0 10px #d900ff;
+}
+
+.stat-value {
+    font-size: 13px;
+    font-weight: bold;
+    min-width: 45px;
+    text-align: right;
+    color: #fff;
+}
+
+/* Timeline Pill Badge */
+.timeline-badge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(6, 12, 22, 0.88);
+    padding: 8px 16px;
+    border-radius: 24px;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+#timelineBadge {
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.timeline-past {
+    background: rgba(0, 240, 255, 0.15);
+    border: 2px solid #00f0ff;
+    color: #00f0ff;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.timeline-future {
+    background: rgba(217, 0, 255, 0.15);
+    border: 2px solid #d900ff;
+    color: #ff00c8;
+    box-shadow: 0 0 20px rgba(217, 0, 255, 0.5);
+}
+
+.shift-prompt {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+}
+
+/* Objective Tracker & Right Controls Group */
+.hud-right-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+#audioToggleBtn {
+    background: rgba(8, 16, 28, 0.85);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    color: #00f0ff;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    backdrop-filter: blur(6px);
+    transition: all 0.2s ease;
+    align-self: flex-end;
+}
+
+#audioToggleBtn:hover {
+    background: #00f0ff;
+    color: #000;
+    box-shadow: 0 0 12px #00f0ff;
+}
+
+.objective-container {
+    background: rgba(8, 16, 28, 0.85);
+    border-left: 3px solid #00ffaa;
+    padding: 10px 16px;
+    border-radius: 0 4px 4px 0;
+    backdrop-filter: blur(6px);
+    max-width: 320px;
+}
+
+.objective-header {
+    font-size: 11px;
+    color: #00ffaa;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+#objectiveText {
+    font-size: 13px;
+    color: #e0f4ff;
+    line-height: 1.4;
+}
+
+/* Boss Health Bar */
+#bossHealthContainer {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 520px;
+    background: rgba(12, 4, 18, 0.85);
+    border: 1px solid #ff0055;
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 0 25px rgba(255, 0, 85, 0.35);
+}
+
+.boss-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #ff0055;
+    margin-bottom: 6px;
+    text-shadow: 0 0 8px #ff0055;
+}
+
+.boss-bar-bg {
+    width: 100%;
+    height: 14px;
+    background: rgba(30, 0, 15, 0.9);
+    border: 1px solid #ff0055;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+#bossHpFill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff00aa, #ff0055);
+    box-shadow: 0 0 12px #ff0055;
+    transition: width 0.1s linear;
+}
+
+/* Controls Hint at bottom right */
+.controls-hint {
+    align-self: flex-end;
+    background: rgba(8, 16, 28, 0.65);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: rgba(224, 244, 255, 0.7);
+    line-height: 1.6;
+}
+
+/* ==========================================
+   DIALOGUE / COMMS WINDOW
+========================================== */
+#dialogueBox {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 720px;
+    max-width: 90vw;
+    background: rgba(10, 18, 30, 0.94);
+    border: 2px solid #00f0ff;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.35);
+    border-radius: 6px;
+    padding: 20px 24px;
+    z-index: 50;
+    display: none;
+    pointer-events: auto;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+.dialogue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.dialogue-sender {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #00f0ff;
+    text-shadow: 0 0 8px #00f0ff;
+}
+
+.dialogue-prompt {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+    animation: blink 1.2s infinite;
+}
+
+.dialogue-body {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #ffffff;
+    min-height: 52px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1.0; }
+}
+
+/* ==========================================
+   MODAL / MENUS (START, PAUSE, VICTORY, GAME OVER)
+========================================== */
+.modal-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(4, 7, 14, 0.88);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.cyber-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #00f0ff 20%, #ffffff 50%, #d900ff 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 35px rgba(0, 240, 255, 0.5);
+    margin-bottom: 12px;
+}
+
+.cyber-subtitle {
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: #00ffaa;
+    text-shadow: 0 0 10px #00ffaa;
+    margin-bottom: 30px;
+}
+
+.lore-brief {
+    max-width: 620px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #bdd6e6;
+    background: rgba(12, 24, 40, 0.6);
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    padding: 18px 24px;
+    border-radius: 6px;
+    margin-bottom: 36px;
+    text-align: left;
+}
+
+.menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: center;
+}
+
+.cyber-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 14px 38px;
+    border: 2px solid #00f0ff;
+    background: rgba(0, 240, 255, 0.12);
+    color: #00f0ff;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    min-width: 240px;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.cyber-btn:hover {
+    background: #00f0ff;
+    color: #050811;
+    box-shadow: 0 0 30px #00f0ff;
+    transform: translateY(-2px);
+}
+
+.cyber-btn.btn-magenta {
+    border-color: #d900ff;
+    color: #d900ff;
+    background: rgba(217, 0, 255, 0.12);
+    box-shadow: 0 0 15px rgba(217, 0, 255, 0.2);
+}
+
+.cyber-btn.btn-magenta:hover {
+    background: #d900ff;
+    color: #fff;
+    box-shadow: 0 0 30px #d900ff;
+}
+
+/* Stats list in Victory Screen */
+.stats-summary {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 30px;
+    background: rgba(12, 24, 40, 0.7);
+    border: 1px solid #00f0ff;
+    padding: 16px 28px;
+    border-radius: 6px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.summary-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #00ffaa;
+}
+
+.summary-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+}
+
+
