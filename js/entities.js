@@ -76,8 +76,7 @@ class Player {
         // ------------------------------------
         if (this.isDashing) {
             this.dashTimer -= dt;
-            this.x += this.dashDirX * this.dashSpeed * dt;
-            this.y += this.dashDirY * this.dashSpeed * dt;
+            this.moveWithCollision(this.dashDirX * this.dashSpeed * dt, this.dashDirY * this.dashSpeed * dt, level);
 
             // Spawn after-image
             this.afterImages.push({
@@ -600,6 +599,7 @@ class BossTitan {
         this.shieldActive = true;
         this.vortexTimer = 0;
         this.pylonsDestroyed = 0;
+        this.isDead = false;
     }
 
     update(dt, player, engine, level, projectiles) {
@@ -695,6 +695,7 @@ class BossTitan {
     }
 
     takeDamage(amount, engine) {
+        if (this.isDead) return false;
         if (this.shieldActive) {
             engine.addFloatingText("SHIELDED! OVERLOAD CHRONO-PYLONS FIRST!", this.x, this.y - 50, '#00f0ff', 14);
             window.AudioEngine.playHit(false);
@@ -708,6 +709,7 @@ class BossTitan {
         window.AudioEngine.playHit(false);
 
         if (this.hp <= 0) {
+            this.isDead = true;
             window.AudioEngine.playExplosion(true);
             engine.spawnBurst(this.x, this.y, '#ffffff', 60, 300);
             return true;

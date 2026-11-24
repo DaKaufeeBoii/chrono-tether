@@ -159,7 +159,7 @@ class GameEngine {
     // ==========================================
     // UPDATE CYCLE
     // ==========================================
-    update(dt, player, mouseWorld) {
+    update(dt, player, mouseWorld, level) {
         if (this.freezeFrames > 0) {
             this.freezeFrames--;
             return;
@@ -178,6 +178,18 @@ class GameEngine {
 
             this.camera.targetX = player.x + clampedLookX;
             this.camera.targetY = player.y + clampedLookY;
+
+            // Clamp camera inside station level boundaries
+            if (level) {
+                const halfW = (this.width / 2) / this.camera.zoom;
+                const halfH = (this.height / 2) / this.camera.zoom;
+                if (level.width > halfW * 2) {
+                    this.camera.targetX = Math.max(halfW, Math.min(level.width - halfW, this.camera.targetX));
+                }
+                if (level.height > halfH * 2) {
+                    this.camera.targetY = Math.max(halfH, Math.min(level.height - halfH, this.camera.targetY));
+                }
+            }
 
             this.camera.x += (this.camera.targetX - this.camera.x) * this.camera.smoothness;
             this.camera.y += (this.camera.targetY - this.camera.y) * this.camera.smoothness;

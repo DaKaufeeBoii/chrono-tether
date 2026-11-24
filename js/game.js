@@ -171,8 +171,10 @@ class ChronoGame {
         this.pauseScreen.style.display = 'none';
 
         this.stats.startTime = performance.now();
+        this.stats.elapsedSeconds = 0;
         this.stats.phaseShifts = 0;
         this.stats.enemiesKilled = 0;
+        this.bossDefeated = false;
 
         this.player = new Player(220, 900);
         this.projectiles = [];
@@ -210,6 +212,11 @@ class ChronoGame {
         this.levelManager.loadSector(this.levelManager.currentSector, this.player);
         this.player.hp = this.player.maxHp;
         this.player.energy = this.player.maxEnergy;
+        this.player.currentTimeline = 'past';
+        this.engine.setTimeline('past', this.player.x, this.player.y);
+        window.AudioEngine.setTimeline('past');
+        this.timelineBadge.innerText = "T-0 : PRISTINE PAST";
+        this.timelineBadge.className = "timeline-past";
         this.state = 'PLAYING';
     }
 
@@ -218,9 +225,19 @@ class ChronoGame {
     // ==========================================
     executePhaseShift() {
         if (this.phaseCooldown > 0) return;
-        this.phaseCooldown = this.phaseMaxCooldown;
 
         const nextTimeline = (this.player.currentTimeline === 'past') ? 'future' : 'past';
+
+        // Collision Check: Prevent phasing into solid matter/bulkheads!
+        if (this.levelManager.checkWallCollision(this.player.x, this.player.y, this.player.radius, nextTimeline)) {
+            this.engine.addFloatingText("COLLISION HAZARD! CANNOT PHASE INTO SOLID BULKHEAD!", this.player.x, this.player.y - 35, '#ff0055', 14);
+            this.engine.spawnBurst(this.player.x, this.player.y, '#ff0055', 8, 70);
+            window.AudioEngine.playAlarm();
+            this.phaseCooldown = 0.25;
+            return;
+        }
+
+        this.phaseCooldown = this.phaseMaxCooldown;
         this.player.currentTimeline = nextTimeline;
         this.stats.phaseShifts++;
 
@@ -292,6 +309,7 @@ class ChronoGame {
     }
 
     playLog(terminalLog) {
+        this.player.isCharging = false;
         this.state = 'DIALOGUE';
         const lines = terminalLog.lines.map(line => ({
             sender: terminalLog.sender,
@@ -299,15 +317,18 @@ class ChronoGame {
         }));
         window.DialogueSystem.start(lines, () => {
             this.state = 'PLAYING';
+            this.phaseCooldown = 0.2;
         });
     }
 
     playCutscene(key, onComplete = null) {
+        this.player.isCharging = false;
         const script = STORY_DATA.cutscenes[key];
         if (!script) return;
         this.state = 'DIALOGUE';
         window.DialogueSystem.start(script, () => {
             this.state = 'PLAYING';
+            this.phaseCooldown = 0.2;
             if (onComplete) onComplete();
         });
     }
@@ -320,6 +341,7 @@ class ChronoGame {
         this.lastTime = currentTime;
 
         if (this.state === 'PLAYING') {
+            this.stats.elapsedSeconds += dt;
             this.update(dt);
         } else if (this.state === 'DIALOGUE') {
             window.DialogueSystem.update(dt);
@@ -337,6 +359,9 @@ class ChronoGame {
     update(dt) {
         if (this.phaseCooldown > 0) this.phaseCooldown -= dt;
 
+        // Poll Gamepad
+        this.pollGamepad(dt);
+
         // Weapon charge accumulation
         if (this.player.isCharging) {
             this.player.chargeTimer = Math.min(this.player.chargeMax, this.player.chargeTimer + dt);
@@ -353,9 +378,9 @@ class ChronoGame {
             this.firePlayerWeapon();
         }
 
-        // Update engine camera & particles
+        // Update engine camera & particles with level bounds clamping
         const mouseWorld = this.engine.screenToWorld(this.input.mouseX, this.input.mouseY);
-        this.engine.update(dt, this.player, mouseWorld);
+        this.engine.update(dt, this.player, mouseWorld, this.levelManager);
 
         // Update Projectiles
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
@@ -525,6 +550,11 @@ class ChronoGame {
             window.AudioEngine.playTerminal();
             this.levelManager.loadSector(nextSector, this.player);
             this.projectiles = [];
+            this.player.currentTimeline = 'past';
+            this.engine.setTimeline('past', this.player.x, this.player.y);
+            window.AudioEngine.setTimeline('past');
+            this.timelineBadge.innerText = "T-0 : PRISTINE PAST";
+            this.timelineBadge.className = "timeline-past";
 
             if (nextSector === 3) {
                 setTimeout(() => {
@@ -535,8 +565,11 @@ class ChronoGame {
     }
 
     handleBossDefeat() {
+        if (this.bossDefeated) return;
+        this.bossDefeated = true;
         this.state = 'DIALOGUE';
         this.levelManager.boss = null;
+        this.projectiles = []; // Clear lingering projectiles
         this.engine.spawnBurst(1350, 1100, '#ffffff', 80, 400);
 
         this.playCutscene('boss_defeat', () => {
@@ -551,7 +584,7 @@ class ChronoGame {
 
     showVictoryScreen() {
         this.state = 'VICTORY';
-        const totalSec = Math.round((performance.now() - this.stats.startTime) / 1000);
+        const totalSec = Math.round(this.stats.elapsedSeconds);
         const mins = Math.floor(totalSec / 60);
         const secs = totalSec % 60;
         const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -684,6 +717,63 @@ class ChronoGame {
             this.dialogueBody.innerText = window.DialogueSystem.displayedText;
         } else {
             this.dialogueBox.style.display = 'none';
+        }
+    }
+
+    // ==========================================
+    // GAMEPAD CONTROLLER SUPPORT
+    // ==========================================
+    pollGamepad(dt) {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        if (!gamepads || !gamepads[0]) return;
+        const gp = gamepads[0];
+        
+        // Left stick movement
+        const deadzone = 0.22;
+        let lx = gp.axes[0] || 0;
+        let ly = gp.axes[1] || 0;
+        if (Math.abs(lx) < deadzone) lx = 0;
+        if (Math.abs(ly) < deadzone) ly = 0;
+        
+        if (lx !== 0 || ly !== 0) {
+            this.input.keys['KeyW'] = ly < -deadzone;
+            this.input.keys['KeyS'] = ly > deadzone;
+            this.input.keys['KeyA'] = lx < -deadzone;
+            this.input.keys['KeyD'] = lx > deadzone;
+        }
+
+        // Right stick aim
+        let rx = gp.axes[2] || 0;
+        let ry = gp.axes[3] || 0;
+        if (Math.abs(rx) > deadzone || Math.abs(ry) > deadzone) {
+            const angle = Math.atan2(ry, rx);
+            const targetScreen = this.engine.worldToScreen(this.player.x + Math.cos(angle) * 160, this.player.y + Math.sin(angle) * 160);
+            this.input.mouseX = targetScreen.x;
+            this.input.mouseY = targetScreen.y;
+        }
+
+        // Buttons
+        // A (Button 0) or Right Trigger (Button 7): Shoot
+        const btnShoot = (gp.buttons[0] && gp.buttons[0].pressed) || (gp.buttons[7] && gp.buttons[7].pressed);
+        if (btnShoot && !this.input.isMouseDown) {
+            this.input.isMouseDown = true;
+            this.player.isCharging = true;
+        } else if (!btnShoot && this.input.isMouseDown) {
+            this.input.isMouseDown = false;
+            this.firePlayerWeapon();
+        }
+
+        // B (Button 1) or Right Bumper (Button 5): Phase Shift
+        if ((gp.buttons[1] && gp.buttons[1].pressed) || (gp.buttons[5] && gp.buttons[5].pressed)) {
+            this.executePhaseShift();
+        }
+
+        // X (Button 2) or Left Bumper (Button 4): Dash
+        this.input.keys['ShiftLeft'] = (gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[4] && gp.buttons[4].pressed);
+
+        // Y (Button 3) or D-Pad Up: Interact [E]
+        if (gp.buttons[3] && gp.buttons[3].pressed) {
+            this.handleInteract();
         }
     }
 }

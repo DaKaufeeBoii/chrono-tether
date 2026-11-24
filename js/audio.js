@@ -68,6 +68,14 @@ class SoundSystem {
             this.musicGain.connect(this.timelineFilter);
             this.timelineFilter.connect(this.masterGain);
 
+            // Pre-allocate Snare Noise Buffer
+            const bufferSize = Math.floor(this.ctx.sampleRate * 0.1);
+            this.snareBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const output = this.snareBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.03));
+            }
+
             this.initialized = true;
             this.startMusic();
         } catch (e) {
@@ -86,15 +94,17 @@ class SoundSystem {
         this.currentTimeline = timeline;
         const now = this.ctx.currentTime;
         
-        // Dynamically shift audio filter when reality phases!
+        // Dynamically shift audio filter when reality phases with click-free anchoring!
+        const currentFreq = Math.max(20, this.timelineFilter.frequency.value);
+        this.timelineFilter.frequency.cancelScheduledValues(now);
+        this.timelineFilter.frequency.setValueAtTime(currentFreq, now);
+
         if (timeline === 'past') {
             // T-0: Bright, open high-frequency shimmer, crisp technological neon
-            this.timelineFilter.frequency.cancelScheduledValues(now);
             this.timelineFilter.frequency.exponentialRampToValueAtTime(14000, now + 0.35);
             this.timelineFilter.Q.setValueAtTime(1.8, now);
         } else {
             // T+60: Deep, suffocating, resonant void low-pass, decayed temporal echo
-            this.timelineFilter.frequency.cancelScheduledValues(now);
             this.timelineFilter.frequency.exponentialRampToValueAtTime(650, now + 0.35);
             this.timelineFilter.Q.setValueAtTime(4.0, now);
         }
@@ -208,15 +218,9 @@ class SoundSystem {
     }
 
     playSynthSnare(time) {
-        // Noise buffer snare
-        const bufferSize = this.ctx.sampleRate * 0.1;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const output = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.03));
-        }
+        if (!this.snareBuffer) return;
         const whiteNoise = this.ctx.createBufferSource();
-        whiteNoise.buffer = buffer;
+        whiteNoise.buffer = this.snareBuffer;
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'highpass';
         filter.frequency.value = 800;
