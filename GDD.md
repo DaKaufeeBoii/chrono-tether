@@ -1,11 +1,11 @@
 # GAME DESIGN DOCUMENT (GDD)
 # CHRONO TETHER: LAST RECORD OF THE NOMOS
 
-**Project Codename:** `game-arena / Chrono Tether`  
+**Project Codename:** `chrono-tether`  
 **Studio / Developer:** DaKaufeeBoii  
-**Event:** Game Arena Hackathon  
+**Event:** GAME ARENA: Build Your Game, Design Your Banner & Win with Google Gemini! (SVERI Pandharpur)  
 **Target Platform:** Modern Web Browsers (Desktop & Mobile)  
-**Live Demo:** [https://dakaufeeboii.github.io/game-arena/](https://dakaufeeboii.github.io/game-arena/)  
+**Live Demo:** [https://dakaufeeboii.github.io/chrono-tether/](https://dakaufeeboii.github.io/chrono-tether/)  
 **Technology Stack:** Pure HTML5 Canvas 2D + Web Audio API (Zero External Asset Dependencies)  
 **Document Version:** 2.0.0 (Production Master)  
 **Last Updated:** November 2026  

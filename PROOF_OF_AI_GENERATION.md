@@ -2,11 +2,11 @@
 **Project:** Game Arena Hackathon — CHRONO TETHER: LAST RECORD OF THE NOMOS  
 **Final Production Platform:** Pure Web Game (HTML5 Canvas + Procedural Web Audio API)  
 **AI Foundation Model:** Gemini 3.8 Flash by Google DeepMind (Google Antigravity Agent Framework)  
-**Live Production URL:** https://dakaufeeboii.github.io/game-arena/  
-**GitHub Repository:** https://github.com/DaKaufeeBoii/game-arena  
+**Live Production URL:** https://dakaufeeboii.github.io/chrono-tether/  
+**GitHub Repository:** https://github.com/DaKaufeeBoii/chrono-tether  
 **Workspace:** `d:\Kaufee\projects\game-arena`  
 **Log Inception Timestamp:** 2026-11-23T21:26:00+05:30  
-**Current Status:** EXPANSION IN PROGRESS (1-Hour+ Metroidvania Campaign)  
+**Current Status:** PRODUCTION COMPLETE & DEPLOYED (1-Hour+ Metroidvania Campaign + Key Art Banner)  
 
 ---
 
@@ -529,11 +529,34 @@ Every entry records:
 
 ---
 
+### Entry #028: Repository Renaming, Live URL Customization & AI Promotional Banner Generation
+- **Timestamp:** 2026-11-24T09:02:00+05:30
+- **Context:** Fulfillment of Hackathon Mission Deliverables (Promotional Banner Key Art) and User Directive for Customized Game URL.
+- **User Directives Addressed:**
+  1. *"Can you also change the url of the game to refrain from being just 'game-arena'? keep its name there."*
+  2. *"Read the whole thing. understand all the important info and write a to do list. Check off everything we're done with and create everything missing as long as the criteria is met."*
+- **Actions Executed:**
+  1. **GitHub Repository & URL Renaming:**
+     - Renamed GitHub repository from `DaKaufeeBoii/game-arena` to `DaKaufeeBoii/chrono-tether` via GitHub CLI (`gh repo rename chrono-tether --yes`).
+     - Updated local git remote tracking: `https://github.com/DaKaufeeBoii/chrono-tether.git`.
+     - Verified GitHub Pages build target: **`https://dakaufeeboii.github.io/chrono-tether/`**.
+  2. **Official Promotional Banner Generation (Google AI Image Generator Subagent):**
+     - Invoked `image-generator` subagent to produce the official 16:9 (1920x1080) key art for *CHRONO TETHER: LAST RECORD OF THE NOMOS*.
+     - **Visual Prompt Formulation:**
+       > *"Cinema-grade 16:9 promotional banner and key visual for 'CHRONO TETHER: LAST RECORD OF THE NOMOS'. Dramatic vertical split down the center representing two overlapping timelines aboard colony ship U.S.S. Nomos near black hole event horizon. Left half: pristine cyan/electric-blue cybernetic corridors with glowing floor conduits and intact titanium bulkheads. Right half: decayed neon-violet ruins with floating debris, cosmic void tears, and shattered hull. Central protagonist UNIT-7 standing boldly at the intersection, half polished white-chrome, half battle-damaged titanium with violet energy seams, with a luminescent chronal tether physically stitching the two realities together. Background accretion disk of singularity bending space. AAA glowing typography 'CHRONO TETHER: LAST RECORD OF THE NOMOS'."*
+     - **Delivered Assets:**
+       - Master Key Art: `banner.png` (1.04 MB, Full HD 16:9).
+       - Redundant assets: `banner.jpg`, `assets/banner.png`.
+       - Showcased in master documentation `README.md`.
+- **Status:** **ALL HACKATHON DELIVERABLES (GAME, BANNER, DOCUMENTATION, PROOF) COMPLETED & VERIFIED.**
+
+---
+
 ## 📊 Final Compliance & AI Generation Audit Summary
 
 | Evaluation Vector | Specification | Verified Status |
 | :--- | :--- | :--- |
-| **Game Title** | *CHRONO TETHER: LAST RECORD OF THE NOMOS* | Confirmed |
+| **Game Title** | *CHRONO TETHER: LAST RECORD OF THE NOMOS* | Confirmed & Attributed |
 | **Platform** | HTML5 Canvas 2D / Modern Web Browsers | Verified (60 FPS) |
 | **AI Foundation Model** | **Gemini 3.8 Flash by Google DeepMind** | Verified & Attributed |
 | **Target Gameplay Scope** | Metroidvania Adventure (1-Hour+ Full Playthrough) | 100% Implemented & Verified |
@@ -542,8 +565,9 @@ Every entry records:
 | **Causality Mechanics** | Past actions alter Future geometry (Seed planting, laser bypass, EMP barriers) | Verified & Playable |
 | **Save System** | Native `localStorage` persistence with Save Stations & Continue Loader | Verified & Functional |
 | **World Map** | Dynamic Minimap HUD + Interactive Fullscreen Map (`[M]`) across all 5 Decks | Verified & Operational |
-| **Live Web Demo** | [https://dakaufeeboii.github.io/game-arena/](https://dakaufeeboii.github.io/game-arena/) | Active & Deployed |
-| **Source Code** | [https://github.com/DaKaufeeBoii/game-arena](https://github.com/DaKaufeeBoii/game-arena) | Committed & Pushed (`main`) |
+| **Promotional Banner**| Official 16:9 AI-generated key art featuring game title, hero, and split timeline | `banner.png` (1920x1080) |
+| **Live Web Demo** | [https://dakaufeeboii.github.io/chrono-tether/](https://dakaufeeboii.github.io/chrono-tether/) | Active & Deployed |
+| **Source Code** | [https://github.com/DaKaufeeBoii/chrono-tether](https://github.com/DaKaufeeBoii/chrono-tether) | Committed & Pushed (`main`) |
 | **External Dependencies**| Zero external libraries, CDNs, or static audio/texture files | 100% Self-Contained |
 | **Audio Engine** | Native procedural Web Audio API synthesizer | 11+ SFX + Dynamic Adaptive BGM |
 | **Audit Integrity** | Complete immutable log from initial ideation to production deployment | 100% Complete |
