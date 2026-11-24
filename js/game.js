@@ -39,6 +39,8 @@ class ChronoGame {
             enemiesKilled: 0
         };
 
+        this.seenMemories = new Set();
+
         this.initDomElements();
         this.initInputs();
         this.levelManager.loadSector(1, this.player);
@@ -124,6 +126,19 @@ class ChronoGame {
         this.slotPortal = document.getElementById('abilityPortal');
         this.slotVisor = document.getElementById('abilityVisor');
         this.slotDashName = document.getElementById('slotDashName');
+
+        // Neural Mnemonic Cutscene System Initialization
+        if (window.CutsceneSystem) {
+            window.CutsceneSystem.init();
+        }
+        const memoryModal = document.getElementById('memoryModal');
+        if (memoryModal) {
+            memoryModal.addEventListener('click', (e) => {
+                if (this.state === 'CUTSCENE' && window.CutsceneSystem && e.target.id !== 'skipMemoryBtn') {
+                    window.CutsceneSystem.advance();
+                }
+            });
+        }
     }
 
     initInputs() {
@@ -147,6 +162,19 @@ class ChronoGame {
                 e.preventDefault();
                 window.MapSystem.toggleMap(this);
                 return;
+            }
+
+            // Cutscene Advance & Skip
+            if (this.state === 'CUTSCENE' && window.CutsceneSystem) {
+                if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'Enter') {
+                    e.preventDefault();
+                    window.CutsceneSystem.advance();
+                    return;
+                } else if (e.code === 'Escape') {
+                    e.preventDefault();
+                    window.CutsceneSystem.skip();
+                    return;
+                }
             }
 
             // Dialogue Advance
@@ -232,6 +260,7 @@ class ChronoGame {
         this.stats.phaseShifts = 0;
         this.stats.enemiesKilled = 0;
         this.bossDefeated = false;
+        this.seenMemories = new Set(['memory_1']);
 
         this.player = new Player(450, 2250);
         this.projectiles = [];
@@ -242,10 +271,12 @@ class ChronoGame {
         window.AudioEngine.setMusicMode('exploration');
         window.AudioEngine.setTimeline('past');
 
-        // Trigger opening intro cutscene
+        // Trigger opening mnemonic memory cutscene, then ATLAS dialogue intro
         setTimeout(() => {
-            this.playCutscene('intro');
-        }, 400);
+            this.playMemoryCutscene('memory_1', () => {
+                this.playCutscene('intro');
+            });
+        }, 350);
     }
 
     continueGame() {
@@ -568,6 +599,20 @@ class ChronoGame {
         });
     }
 
+    playMemoryCutscene(memoryId, onComplete = null) {
+        if (!window.CutsceneSystem) {
+            if (onComplete) onComplete();
+            return;
+        }
+        this.player.isCharging = false;
+        this.state = 'CUTSCENE';
+        window.CutsceneSystem.play(memoryId, () => {
+            this.state = 'PLAYING';
+            this.phaseCooldown = 0.3;
+            if (onComplete) onComplete();
+        });
+    }
+
     // ==========================================
     // MAIN LOOP
     // ==========================================
@@ -580,10 +625,17 @@ class ChronoGame {
             this.update(dt);
         } else if (this.state === 'DIALOGUE') {
             window.DialogueSystem.update(dt);
+        } else if (this.state === 'CUTSCENE') {
+            if (window.CutsceneSystem) window.CutsceneSystem.update(dt);
         }
 
         // Render everything
         this.render();
+
+        // Render Cutscene Canvas
+        if (this.state === 'CUTSCENE' && window.CutsceneSystem) {
+            window.CutsceneSystem.render();
+        }
 
         // Update HTML HUD
         this.updateHUD();
@@ -808,7 +860,16 @@ class ChronoGame {
             this.timelineBadge.innerText = "T-0 : PRISTINE PAST";
             this.timelineBadge.className = "timeline-past";
 
-            if (targetDeck === 5) {
+            if (targetDeck === 2 && !this.seenMemories.has('memory_2')) {
+                this.seenMemories.add('memory_2');
+                setTimeout(() => this.playMemoryCutscene('memory_2'), 400);
+            } else if (targetDeck === 3 && !this.seenMemories.has('memory_3')) {
+                this.seenMemories.add('memory_3');
+                setTimeout(() => this.playMemoryCutscene('memory_3'), 400);
+            } else if (targetDeck === 4 && !this.seenMemories.has('memory_4')) {
+                this.seenMemories.add('memory_4');
+                setTimeout(() => this.playMemoryCutscene('memory_4'), 400);
+            } else if (targetDeck === 5) {
                 setTimeout(() => {
                     this.playCutscene('boss_intro');
                 }, 500);
@@ -864,7 +925,9 @@ class ChronoGame {
         this.engine.spawnBurst(4200, 2250, '#ffffff', 80, 400);
 
         this.playCutscene('boss_defeat', () => {
-            this.showVictoryScreen();
+            this.playMemoryCutscene('memory_5', () => {
+                this.showVictoryScreen();
+            });
         });
     }
 

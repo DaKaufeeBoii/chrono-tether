@@ -536,6 +536,60 @@ class SoundSystem {
         osc1.stop(now + 0.85);
         osc2.stop(now + 0.85);
     }
+
+    playMnemonicPulse() {
+        if (!this.initialized || this.muted) return;
+        const now = this.ctx.currentTime;
+        
+        // Low warm sub-bass pulse
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(55, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.4);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 1.2);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(180, now);
+        filter.frequency.linearRampToValueAtTime(420, now + 0.3);
+        filter.frequency.exponentialRampToValueAtTime(80, now + 1.2);
+        filter.Q.setValueAtTime(4.0, now);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(now);
+        osc.stop(now + 1.2);
+    }
+
+    playTypewriterChirp() {
+        if (!this.initialized || this.muted) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        // Random slight frequency variation for natural mechanical rhythm
+        const freq = 1600 + (Math.random() * 400);
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.7, now + 0.02);
+
+        gain.gain.setValueAtTime(0.035, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(now);
+        osc.stop(now + 0.025);
+    }
 }
 
 // Global audio singleton

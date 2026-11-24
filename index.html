@@ -110,6 +110,42 @@
         <div id="dialogueBody" class="dialogue-body">...</div>
     </div>
 
+    <!-- 3B. Neural Mnemonic Memory Cutscene Overlay -->
+    <div id="memoryModal" class="modal-screen" style="display: none;">
+        <div class="memory-frame">
+            <!-- Top Telemetry Header -->
+            <div class="memory-telemetry-header">
+                <div class="memory-telemetry-left">
+                    <span class="blinking-dot"></span>
+                    <span id="memoryHeaderTitle">MNEMONIC RECONSTRUCTION // SECTOR 01</span>
+                </div>
+                <div id="memoryHeaderSubtitle" class="memory-telemetry-right">
+                    EARTH ORBITAL CUPOLA // T-MINUS 14 YEARS
+                </div>
+            </div>
+
+            <!-- Cinematic 16:9 Canvas Viewport with CRT & Scanlines -->
+            <div class="memory-viewport">
+                <canvas id="memoryCanvas" width="1280" height="720"></canvas>
+                <div class="crt-scanline-overlay"></div>
+                <div class="crt-glitch-layer"></div>
+            </div>
+
+            <!-- Subtitle & Monologue Overlay -->
+            <div class="memory-caption-box">
+                <div class="memory-speaker-bar">
+                    <span id="memorySpeaker" class="memory-speaker-name">DR. ELENA WARD</span>
+                    <span id="memorySpeakerTitle" class="memory-speaker-title">CHIEF TEMPORAL PHYSICIST</span>
+                </div>
+                <div id="memoryText" class="memory-caption-text">...</div>
+                <div class="memory-action-prompt">
+                    <span class="advance-cue">[SPACE / CLICK] ADVANCE MEMORY</span>
+                    <button id="skipMemoryBtn" class="skip-btn">[ESC] SKIP SEQUENCE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 4. Title / Start Screen -->
     <div id="startScreen" class="modal-screen">
         <h1 class="cyber-title">CHRONO TETHER</h1>
@@ -229,6 +265,7 @@
     <script src="js/entities.js"></script>
     <script src="js/story.js"></script>
     <script src="js/levels.js"></script>
+    <script src="js/cutscenes.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>
