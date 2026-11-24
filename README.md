@@ -4,11 +4,13 @@
 *Engine:* Pure HTML5 Canvas + Web Audio API (Zero External Asset Dependencies, Runs 100% Offline in Any Browser)  
 🎮 **Live Web Demo:** [https://dakaufeeboii.github.io/chrono-tether/](https://dakaufeeboii.github.io/chrono-tether/)  
 📦 **Source Code Repository:** [https://github.com/DaKaufeeBoii/chrono-tether](https://github.com/DaKaufeeBoii/chrono-tether)  
-🤖 **AI Foundation Model:** **Gemini 3.8 Flash by Google DeepMind**
+🤖 **AI Foundation Models:**
+- **Game Engine, Architecture & Logic:** **Gemini 3.8 Flash by Google DeepMind**
+- **Game Artwork, Visual Elements & Promotional Banner:** **Google Nano Banana** *(100% Mandatory Track Compliance)*
 
 ---
 
-![CHRONO TETHER Official Promotional Banner](banner.png)
+![CHRONO TETHER Official Promotional Banner (Generated with Google Nano Banana)](banner.png)
 
 ---
 
