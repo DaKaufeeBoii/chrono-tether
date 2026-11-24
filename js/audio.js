@@ -590,6 +590,141 @@ class SoundSystem {
         osc.start(now);
         osc.stop(now + 0.025);
     }
+
+    startCutsceneAtmosphere() {
+        if (!this.initialized || this.muted) return;
+        this.stopCutsceneAtmosphere();
+        const now = this.ctx.currentTime;
+
+        // Duck exploration music
+        if (this.musicGain) {
+            this.musicGain.gain.setTargetAtTime(0.06, now, 0.3);
+        }
+
+        try {
+            // Dual-oscillator analog Reece drone
+            this.cutsceneDroneOsc1 = this.ctx.createOscillator();
+            this.cutsceneDroneOsc2 = this.ctx.createOscillator();
+            const droneFilter = this.ctx.createBiquadFilter();
+            this.cutsceneDroneGain = this.ctx.createGain();
+
+            this.cutsceneDroneOsc1.type = 'sawtooth';
+            this.cutsceneDroneOsc2.type = 'sawtooth';
+            this.cutsceneDroneOsc1.frequency.setValueAtTime(55.0, now); // A1
+            this.cutsceneDroneOsc2.frequency.setValueAtTime(55.6, now); // Subtle warm detune beat
+
+            droneFilter.type = 'lowpass';
+            droneFilter.frequency.setValueAtTime(140, now);
+            droneFilter.Q.setValueAtTime(3.5, now);
+
+            // Filter LFO for breathing drone
+            const lfo = this.ctx.createOscillator();
+            const lfoGain = this.ctx.createGain();
+            lfo.frequency.setValueAtTime(0.25, now); // 4-second breathing cycle
+            lfoGain.gain.setValueAtTime(60, now);
+            lfo.connect(droneFilter.frequency);
+            lfo.start(now);
+            this.cutsceneLfo = lfo;
+
+            this.cutsceneDroneGain.gain.setValueAtTime(0.001, now);
+            this.cutsceneDroneGain.gain.linearRampToValueAtTime(0.24, now + 1.2);
+
+            this.cutsceneDroneOsc1.connect(droneFilter);
+            this.cutsceneDroneOsc2.connect(droneFilter);
+            droneFilter.connect(this.cutsceneDroneGain);
+            this.cutsceneDroneGain.connect(this.masterGain);
+
+            this.cutsceneDroneOsc1.start(now);
+            this.cutsceneDroneOsc2.start(now);
+
+            // Emotional memory chime interval
+            const notes = [440, 523.25, 659.25, 783.99, 1046.50];
+            let noteIdx = 0;
+            this.cutsceneArpTimer = setInterval(() => {
+                if (!this.initialized || this.muted) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notes[noteIdx % notes.length], t);
+                gain.gain.setValueAtTime(0.08, t);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t);
+                osc.stop(t + 1.8);
+                noteIdx++;
+            }, 1800);
+        } catch (e) {
+            console.warn("Cutscene audio atmosphere error:", e);
+        }
+    }
+
+    stopCutsceneAtmosphere() {
+        if (!this.initialized) return;
+        const now = this.ctx.currentTime;
+
+        // Restore BGM gain
+        if (this.musicGain) {
+            this.musicGain.gain.setTargetAtTime(0.38, now, 0.5);
+        }
+
+        if (this.cutsceneArpTimer) {
+            clearInterval(this.cutsceneArpTimer);
+            this.cutsceneArpTimer = null;
+        }
+
+        if (this.cutsceneDroneGain) {
+            this.cutsceneDroneGain.gain.setTargetAtTime(0.0001, now, 0.4);
+            setTimeout(() => {
+                try {
+                    if (this.cutsceneDroneOsc1) this.cutsceneDroneOsc1.stop();
+                    if (this.cutsceneDroneOsc2) this.cutsceneDroneOsc2.stop();
+                    if (this.cutsceneLfo) this.cutsceneLfo.stop();
+                } catch (e) {}
+                this.cutsceneDroneOsc1 = null;
+                this.cutsceneDroneOsc2 = null;
+                this.cutsceneLfo = null;
+                this.cutsceneDroneGain = null;
+            }, 600);
+        }
+    }
+
+    playGlitchImpact() {
+        if (!this.initialized || this.muted) return;
+        const now = this.ctx.currentTime;
+
+        // 1. Heavy sub-bass hit
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(110, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
+        gain.gain.setValueAtTime(0.45, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now);
+        osc.stop(now + 0.5);
+
+        // 2. High digital static glitch burst
+        if (this.snareBuffer) {
+            const noise = this.ctx.createBufferSource();
+            const noiseGain = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+            noise.buffer = this.snareBuffer;
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(2800, now);
+            filter.Q.setValueAtTime(5.0, now);
+            noiseGain.gain.setValueAtTime(0.22, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(this.sfxGain);
+            noise.start(now);
+            noise.stop(now + 0.12);
+        }
+    }
 }
 
 // Global audio singleton

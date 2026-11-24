@@ -67,16 +67,16 @@ class WorldMapManager {
             "2,2": { type: "item", label: "Phase-Dash Vault", doors: ["left", "right"] },
             "3,2": { type: "normal", label: "Spacetime Bleed Chasm", doors: ["left", "right", "bottom"] },
             "3,3": { type: "item", label: "Visor Spectral Vault", doors: ["top"] },
-            "4,2": { type: "normal", label: "Event Horizon Gate", doors: ["left", "right"] },
+            "4,2": { type: "boss", label: "Chrono Phantom Arena", doors: ["left", "right"] },
             "5,2": { type: "portal", label: "Deck 5 Crucible Airlock", doors: ["left"] }
         };
 
         // Deck 5: Singularity Crucible
         this.deckDefinitions[5].rooms = {
             "1,2": { type: "save", label: "Final Anchorage", doors: ["right"] },
-            "2,2": { type: "normal", label: "Crucible Pylon Field", doors: ["left", "right"] },
-            "3,2": { type: "boss", label: "Singularity Core", doors: ["left", "right"] },
-            "4,2": { type: "item", label: "Cryo-Pod #404 (Maya)", doors: ["left"] }
+            "2,2": { type: "item", label: "Cryo-Bay #404 (Maya)", doors: ["left", "right"] },
+            "3,2": { type: "normal", label: "Crucible Pylon Field", doors: ["left", "right"] },
+            "4,2": { type: "boss", label: "Singularity Core", doors: ["left"] }
         };
     }
 

@@ -56,9 +56,9 @@
             </div>
         </div>
 
-        <!-- Boss Health Bar (Appears in Sector 3) -->
+        <!-- Boss Health Bar -->
         <div id="bossHealthContainer">
-            <div class="boss-title">PARADOX NEXUS // TEMPORAL ANOMALY</div>
+            <div id="bossName" class="boss-title">PARADOX NEXUS // TEMPORAL ANOMALY</div>
             <div class="boss-bar-bg">
                 <div id="bossHpFill"></div>
             </div>
@@ -119,6 +119,10 @@
                     <span class="blinking-dot"></span>
                     <span id="memoryHeaderTitle">MNEMONIC RECONSTRUCTION // SECTOR 01</span>
                 </div>
+                <div class="memory-telemetry-center">
+                    <span class="telemetry-chip">SYNC: 99.8%</span>
+                    <span class="telemetry-chip">OPTIC FEED: OK</span>
+                </div>
                 <div id="memoryHeaderSubtitle" class="memory-telemetry-right">
                     EARTH ORBITAL CUPOLA // T-MINUS 14 YEARS
                 </div>
@@ -129,15 +133,30 @@
                 <canvas id="memoryCanvas" width="1280" height="720"></canvas>
                 <div class="crt-scanline-overlay"></div>
                 <div class="crt-glitch-layer"></div>
+                <div class="cinematic-letterbox top"></div>
+                <div class="cinematic-letterbox bottom"></div>
             </div>
 
-            <!-- Subtitle & Monologue Overlay -->
+            <!-- Subtitle & Monologue Overlay with Holographic Speaker Avatar -->
             <div class="memory-caption-box">
-                <div class="memory-speaker-bar">
-                    <span id="memorySpeaker" class="memory-speaker-name">DR. ELENA WARD</span>
-                    <span id="memorySpeakerTitle" class="memory-speaker-title">CHIEF TEMPORAL PHYSICIST</span>
+                <div class="memory-caption-main">
+                    <div class="memory-avatar-badge">
+                        <div id="memoryAvatarIcon" class="avatar-icon icon-elena"></div>
+                        <div class="voice-equalizer">
+                            <span class="eq-bar"></span>
+                            <span class="eq-bar"></span>
+                            <span class="eq-bar"></span>
+                            <span class="eq-bar"></span>
+                        </div>
+                    </div>
+                    <div class="memory-caption-content">
+                        <div class="memory-speaker-bar">
+                            <span id="memorySpeaker" class="memory-speaker-name">DR. ELENA WARD</span>
+                            <span id="memorySpeakerTitle" class="memory-speaker-title">CHIEF TEMPORAL PHYSICIST</span>
+                        </div>
+                        <div id="memoryText" class="memory-caption-text">...</div>
+                    </div>
                 </div>
-                <div id="memoryText" class="memory-caption-text">...</div>
                 <div class="memory-action-prompt">
                     <span class="advance-cue">[SPACE / CLICK] ADVANCE MEMORY</span>
                     <button id="skipMemoryBtn" class="skip-btn">[ESC] SKIP SEQUENCE</button>

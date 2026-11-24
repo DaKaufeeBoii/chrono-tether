@@ -663,6 +663,7 @@ class BossTitan {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        this.name = "Paradox Nexus // Chrono Titan";
         this.radius = 48;
         this.maxHp = 600;
         this.hp = 600;
@@ -867,6 +868,10 @@ class MaintenanceOverseer {
             this.x += Math.cos(this.facingAngle) * 75 * dt;
             this.y += Math.sin(this.facingAngle) * 75 * dt;
         }
+
+        // Clamp to Deck 1 Boss Arena (Room 4,2)
+        this.x = Math.max(4880, Math.min(5920, this.x));
+        this.y = Math.max(1880, Math.min(2620, this.y));
 
         // Periodic Attack Patterns
         if (this.attackTimer > 2.2) {
@@ -1315,6 +1320,173 @@ class GravGoliath {
 }
 
 // ==========================================
+// 4E. MINI-BOSS 4: CHRONO-PHANTOM (DECK 4)
+// ==========================================
+class ChronoPhantom {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.originX = x;
+        this.originY = y;
+        this.name = "Chrono Phantom // Void Matrix";
+        this.radius = 46;
+        this.maxHp = 1350;
+        this.hp = 1350;
+        this.angle = 0;
+        this.timeline = 'future';
+        this.phaseShiftTimer = 0;
+        this.attackTimer = 0;
+        this.attackPattern = 0;
+        this.isDead = false;
+        this.isMiniBoss = true;
+        this.deck = 4;
+        this.dashSpeed = 0;
+        this.dashAngle = 0;
+    }
+
+    update(dt, player, engine, level, projectiles) {
+        if (this.isDead) return;
+        this.angle += dt * 1.5;
+        this.phaseShiftTimer += dt;
+        this.attackTimer += dt;
+
+        // Shift timelines periodically with a temporal warp burst
+        if (this.phaseShiftTimer > 4.2) {
+            this.phaseShiftTimer = 0;
+            this.timeline = (this.timeline === 'past') ? 'future' : 'past';
+            engine.spawnBurst(this.x, this.y, this.timeline === 'past' ? '#00f0ff' : '#d900ff', 24, 200);
+            window.AudioEngine.playPhaseShift();
+            engine.addFloatingText(this.timeline === 'past' ? "PHASED: T-0 PAST" : "PHASED: T+60 FUTURE", this.x, this.y - 50, this.timeline === 'past' ? '#00f0ff' : '#d900ff', 16);
+        }
+
+        // Float towards player but stay inside arena (x: 4880 to 5920, y: 1880 to 2620)
+        const aimAngle = Math.atan2(player.y - this.y, player.x - this.x);
+        const dist = Math.hypot(player.x - this.x, player.y - this.y);
+
+        if (this.dashSpeed > 0) {
+            this.x += Math.cos(this.dashAngle) * this.dashSpeed * dt;
+            this.y += Math.sin(this.dashAngle) * this.dashSpeed * dt;
+            this.dashSpeed = Math.max(0, this.dashSpeed - dt * 800);
+        } else if (dist > 160) {
+            this.x += Math.cos(aimAngle) * 90 * dt;
+            this.y += Math.sin(aimAngle) * 90 * dt;
+        }
+
+        // Clamp to Deck 4 Boss Arena (Room 4,2)
+        this.x = Math.max(4880, Math.min(5920, this.x));
+        this.y = Math.max(1880, Math.min(2620, this.y));
+
+        // Attack cycle
+        if (this.attackTimer > 1.6) {
+            this.attackTimer = 0;
+            this.attackPattern = (this.attackPattern + 1) % 3;
+
+            if (this.attackPattern === 0) {
+                // 1. Void Star Barrage (8-way ring)
+                for (let i = 0; i < 8; i++) {
+                    const a = (i * Math.PI / 4) + this.angle;
+                    projectiles.push(new Projectile(this.x, this.y, Math.cos(a) * 280, Math.sin(a) * 280, {
+                        damage: 18,
+                        timeline: this.timeline,
+                        color: this.timeline === 'past' ? '#00f0ff' : '#d900ff',
+                        radius: 7
+                    }));
+                }
+                window.AudioEngine.playEnemyShot();
+            } else if (this.attackPattern === 1) {
+                // 2. Chrono Phase Dash strike toward player
+                this.dashAngle = aimAngle;
+                this.dashSpeed = 700;
+                window.AudioEngine.playDash();
+                engine.spawnBurst(this.x, this.y, '#ffffff', 20, 180);
+            } else {
+                // 3. Dual-timeline homing wisps
+                [-0.35, 0.35].forEach(offset => {
+                    projectiles.push(new Projectile(this.x, this.y, Math.cos(aimAngle + offset) * 320, Math.sin(aimAngle + offset) * 320, {
+                        damage: 22,
+                        timeline: 'both',
+                        color: '#ff0055',
+                        radius: 8,
+                        life: 2.2
+                    }));
+                });
+                window.AudioEngine.playEnemyShot();
+            }
+        }
+    }
+
+    takeDamage(amount, engine) {
+        if (this.isDead) return false;
+        this.hp = Math.max(0, this.hp - amount);
+        engine.addTrauma(0.3);
+        engine.spawnBurst(this.x, this.y, this.timeline === 'past' ? '#00f0ff' : '#d900ff', 12, 140);
+        engine.addFloatingText(`${Math.round(amount)}`, this.x, this.y - 40, '#ff00aa', 18);
+        window.AudioEngine.playHit(false);
+
+        if (this.hp <= 0) {
+            this.isDead = true;
+            window.AudioEngine.playExplosion(true);
+            engine.spawnBurst(this.x, this.y, '#ffffff', 80, 360);
+            return true;
+        }
+        return false;
+    }
+
+    render(ctx, playerTimeline = 'past') {
+        if (this.isDead) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        const isSame = (this.timeline === playerTimeline);
+        const alpha = isSame ? 1.0 : 0.35;
+        ctx.globalAlpha = alpha;
+
+        // Rotating phantom rings
+        for (let r = 0; r < 3; r++) {
+            ctx.save();
+            ctx.rotate(this.angle * (r % 2 === 0 ? 1 : -1) + r);
+            ctx.strokeStyle = this.timeline === 'past' ? '#00f0ff' : '#d900ff';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius - (r * 8), 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // Core Spectre Orb
+        ctx.fillStyle = this.timeline === 'past' ? '#051829' : '#1f0426';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Health bar
+        const barW = 110;
+        const barH = 7;
+        const pct = Math.max(0, this.hp / this.maxHp);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(-barW / 2, -this.radius - 22, barW, barH);
+        ctx.fillStyle = this.timeline === 'past' ? '#00f0ff' : '#d900ff';
+        ctx.fillRect(-barW / 2, -this.radius - 22, barW * pct, barH);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-barW / 2, -this.radius - 22, barW, barH);
+
+        // Name
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name.toUpperCase(), 0, -this.radius - 26);
+
+        ctx.restore();
+    }
+}
+
+// ==========================================
 // 5. INTERACTIVE OBJECTS (TERMINALS, PYLONS, PICKUPS)
 // ==========================================
 class Terminal {
@@ -1430,6 +1602,17 @@ class Pickup {
             ctx.shadowBlur = 10;
             ctx.fillRect(-8, -3, 16, 6);
             ctx.fillRect(-3, -8, 6, 16);
+        } else if (this.type === 'keycard_yellow') {
+            // Security Keycard
+            ctx.fillStyle = '#ffaa00';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 14;
+            ctx.fillRect(-10, -7, 20, 14);
+            ctx.strokeRect(-10, -7, 20, 14);
+            ctx.fillStyle = '#050914';
+            ctx.fillRect(-6, -4, 5, 8);
         } else {
             // Energy core
             ctx.fillStyle = '#00f0ff';

@@ -29,6 +29,7 @@ class ChronoGame {
 
         // Interactive focus
         this.nearbyTerminal = null;
+        this.doorHintCooldown = 0;
         this.hasShownLockedGateHint = false;
 
         // Mission Stats
@@ -563,6 +564,18 @@ class ChronoGame {
                 }
             }
 
+            // Check Server Vault terminal in Deck 1
+            if (this.nearbyTerminal.id === 'term_1_vault') {
+                if (!this.levelManager.unlockedDoors.has('door_deck1_boss')) {
+                    this.levelManager.unlockedDoors.add('door_deck1_boss');
+                    this.engine.spawnBurst(this.nearbyTerminal.x, this.nearbyTerminal.y, '#ffaa00', 40, 250);
+                    this.engine.addFloatingText("YELLOW SECURITY OVERRIDE GRANTED! BOSS ARENA UNLOCKED!", this.player.x, this.player.y - 45, '#ffaa00', 18);
+                    this.levelManager.objectiveText = "Proceed east to the Boss Arena and eliminate the Maintenance Overseer.";
+                    this.levelManager.objectiveTarget = { x: 5400, y: 2250 };
+                    window.AudioEngine.playPickup();
+                }
+            }
+
             const log = STORY_DATA.terminals[this.nearbyTerminal.id];
             if (log) {
                 this.nearbyTerminal.isRead = true;
@@ -680,6 +693,22 @@ class ChronoGame {
 
             // Player projectile collisions vs enemies / boss
             if (proj.isPlayer) {
+                // Check EMP Grenade / Charged Shot destroying Grav-Barrier in Deck 3
+                if ((proj.isGrenade || proj.isCharged) && !this.levelManager.unlockedDoors.has('grav_barrier_destroyed')) {
+                    const distToBarrier = Math.hypot(proj.x - 4100, proj.y - 2250);
+                    if (distToBarrier < 280) {
+                        this.levelManager.unlockedDoors.add('grav_barrier_destroyed');
+                        this.engine.spawnBurst(4100, 2250, '#7700ff', 60, 360);
+                        this.engine.addFloatingText("GRAV-BARRIER SHATTERED!", 4100, 2250, '#7700ff', 22);
+                        window.AudioEngine.playExplosion(true);
+                        this.engine.addTrauma(0.7);
+                        this.levelManager.objectiveText = "Grav-Barrier breached! Enter the arena and destroy Grav-Goliath.";
+                        this.levelManager.objectiveTarget = { x: 5400, y: 2250 };
+                        this.projectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+
                 // Enemies
                 for (let j = this.levelManager.enemies.length - 1; j >= 0; j--) {
                     const enemy = this.levelManager.enemies[j];
@@ -755,6 +784,8 @@ class ChronoGame {
             if (h.timeline === this.player.currentTimeline || h.timeline === 'both') {
                 if (this.player.x >= h.x && this.player.x <= h.x + h.w &&
                     this.player.y >= h.y && this.player.y <= h.y + h.h) {
+                    // Invulnerable to ground hazards while dashing or airborne grappling!
+                    if (this.player.isDashing || this.player.isGrappling) return;
                     this.player.takeDamage(h.damage * dt, this.engine, true);
                     if (this.player.hp <= 0) this.handleGameOver();
                 }
@@ -768,12 +799,43 @@ class ChronoGame {
             if (dist < this.player.radius + p.radius) {
                 if (p.type === 'health') {
                     this.player.heal(35, this.engine);
+                } else if (p.type === 'keycard_yellow') {
+                    this.levelManager.unlockedDoors.add('door_deck1_boss');
+                    this.engine.spawnBurst(p.x, p.y, '#ffaa00', 45, 260);
+                    this.engine.addFloatingText("YELLOW SECURITY KEYCARD ACQUIRED!", this.player.x, this.player.y - 30, '#ffaa00', 18);
+                    this.levelManager.objectiveText = "Proceed east to the Boss Arena and eliminate the Maintenance Overseer.";
+                    this.levelManager.objectiveTarget = { x: 5400, y: 2250 };
+                    window.AudioEngine.playPickup();
                 } else {
                     this.player.energy = this.player.maxEnergy;
                     this.engine.addFloatingText("+MAX CHRONO", this.player.x, this.player.y - 20, '#00f0ff', 16);
                     window.AudioEngine.playPickup();
                 }
                 this.levelManager.pickups.splice(i, 1);
+            }
+        }
+
+        // Locked door proximity notification
+        if (this.doorHintCooldown > 0) {
+            this.doorHintCooldown -= dt;
+        } else {
+            for (let i = 0; i < this.levelManager.walls.length; i++) {
+                const w = this.levelManager.walls[i];
+                if (w.type === 'door' && w.doorId && !this.levelManager.unlockedDoors.has(w.doorId)) {
+                    const cx = w.x + w.w / 2;
+                    const cy = w.y + w.h / 2;
+                    if (Math.hypot(this.player.x - cx, this.player.y - cy) < 65) {
+                        this.doorHintCooldown = 2.5;
+                        if (w.doorId === 'door_deck1_boss') {
+                            this.engine.addFloatingText("[LOCKED] YELLOW KEYCARD REQUIRED (SECTOR 2-1 SERVER VAULT)!", this.player.x, this.player.y - 35, '#ffaa00', 14);
+                            window.AudioEngine.playAlarm();
+                        } else if (w.doorId === 'grav_barrier_destroyed') {
+                            this.engine.addFloatingText("[GRAV-BARRIER] DISRUPT WITH CHRONAL EMP GRENADE [Q]!", this.player.x, this.player.y - 35, '#7700ff', 14);
+                            window.AudioEngine.playAlarm();
+                        }
+                        break;
+                    }
+                }
             }
         }
 
@@ -839,11 +901,18 @@ class ChronoGame {
         const deck = this.levelManager.currentDeck;
         if (deck === 5 && this.levelManager.boss) {
             const overloadedCount = this.levelManager.pylons.filter(p => p.overloaded).length;
+            const remaining = this.levelManager.pylons.filter(p => !p.overloaded);
             if (overloadedCount >= 4 && this.levelManager.boss.shieldActive) {
                 this.levelManager.boss.shieldActive = false;
-                this.engine.addFloatingText("PARADOX NEXUS SHIELD SHATTERED! STRIKE THE CORE!", this.player.x, this.player.y - 50, '#ff0055', 22);
+                this.levelManager.unlockedDoors.add('door_deck5_nexus');
+                this.engine.addFloatingText("PARADOX NEXUS SHIELD SHATTERED! SINGULARITY CORE UNSEALED!", this.player.x, this.player.y - 50, '#ff0055', 22);
                 this.engine.addTrauma(0.7);
                 window.AudioEngine.playBossRoar();
+                this.levelManager.objectiveText = "Paradox Nexus shield shattered! Enter the Singularity Core (Room 4-2) and strike the Paradox Nexus!";
+                this.levelManager.objectiveTarget = { x: 5400, y: 2250 };
+            } else if (remaining.length > 0) {
+                this.levelManager.objectiveText = `Overload Chrono-Pylons in Sector 3-2 (${overloadedCount}/4) to unseal Singularity Core!`;
+                this.levelManager.objectiveTarget = { x: remaining[0].x, y: remaining[0].y };
             }
         }
     }
@@ -909,6 +978,14 @@ class ChronoGame {
                 this.levelManager.upgrades.push(new UpgradeItem(boss.x, boss.y, 'upgrade_weapon_rail', 'weapon_rail', 'TACHYON RAILGUN'));
                 this.engine.addFloatingText("GRAV-GOLIATH DESTROYED // DECK 4 BREACH UNLOCKED!", boss.x, boss.y - 60, '#7700ff', 20);
                 this.levelManager.objectiveText = "Grav-Goliath destroyed! Proceed through Deck 4 Hull Breach.";
+                this.levelManager.objectiveTarget = { x: 6600, y: 2250 };
+            } else if (boss.deck === 4) {
+                this.levelManager.unlockedDoors.add('chronophantom_defeated');
+                this.levelManager.unlockedDoors.add('door_deck4_exit');
+                if (this.levelManager.exitPortal) this.levelManager.exitPortal.active = true;
+                this.levelManager.upgrades.push(new UpgradeItem(boss.x, boss.y, 'upgrade_hp_3', 'hp_tank', '+25 HP TANK'));
+                this.engine.addFloatingText("CHRONO-PHANTOM ERADICATED // DECK 5 AIRLOCK UNLOCKED!", boss.x, boss.y - 60, '#00f0ff', 20);
+                this.levelManager.objectiveText = "Chrono-Phantom eradicated! Deck 5 Quantum Core Airlock is unlocked.";
                 this.levelManager.objectiveTarget = { x: 6600, y: 2250 };
             }
             this.levelManager.boss = null;
@@ -1109,14 +1186,19 @@ class ChronoGame {
             window.MapSystem.renderMinimap(this.minimapCtx, this);
         }
 
-        // Boss Bar
+        // Boss Bar (visible when engaged or nearby arena)
         if (this.levelManager.boss) {
-            this.bossContainer.style.display = 'flex';
-            const bossPct = (this.levelManager.boss.hp / this.levelManager.boss.maxHp) * 100;
-            this.bossHpFill.style.width = `${Math.max(0, bossPct)}%`;
-            const nameEl = document.getElementById('bossName');
-            if (nameEl && this.levelManager.boss.name) {
-                nameEl.innerText = this.levelManager.boss.name.toUpperCase();
+            const distToBoss = Math.hypot(this.player.x - this.levelManager.boss.x, this.player.y - this.levelManager.boss.y);
+            if (distToBoss < 850) {
+                this.bossContainer.style.display = 'flex';
+                const bossPct = (this.levelManager.boss.hp / this.levelManager.boss.maxHp) * 100;
+                this.bossHpFill.style.width = `${Math.max(0, bossPct)}%`;
+                const nameEl = document.getElementById('bossName');
+                if (nameEl && this.levelManager.boss.name) {
+                    nameEl.innerText = this.levelManager.boss.name.toUpperCase();
+                }
+            } else {
+                this.bossContainer.style.display = 'none';
             }
         } else {
             this.bossContainer.style.display = 'none';
