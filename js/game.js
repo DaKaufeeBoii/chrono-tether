@@ -78,6 +78,13 @@ class ChronoGame {
 
         // Modal Action Buttons
         document.getElementById('startBtn').addEventListener('click', () => this.startGame());
+        const continueBtn = document.getElementById('continueBtn');
+        if (continueBtn) {
+            if (window.SaveSystem && window.SaveSystem.hasSave()) {
+                continueBtn.style.display = 'inline-block';
+            }
+            continueBtn.addEventListener('click', () => this.continueGame());
+        }
         document.getElementById('resumeBtn').addEventListener('click', () => this.resumeGame());
         document.getElementById('restartBtn').addEventListener('click', () => this.restartSector());
         document.getElementById('retryBtn').addEventListener('click', () => this.restartSector());
@@ -89,6 +96,34 @@ class ChronoGame {
                 window.DialogueSystem.advance();
             }
         });
+
+        // Minimap Canvas Context
+        this.minimapCanvas = document.getElementById('minimapCanvas');
+        this.minimapCtx = this.minimapCanvas ? this.minimapCanvas.getContext('2d') : null;
+
+        // Map Buttons
+        const mapToggleBtn = document.getElementById('mapToggleBtn');
+        if (mapToggleBtn) mapToggleBtn.addEventListener('click', () => window.MapSystem.toggleMap(this));
+        const closeMapBtn = document.getElementById('closeMapBtn');
+        if (closeMapBtn) closeMapBtn.addEventListener('click', () => window.MapSystem.toggleMap(this));
+
+        // Deck Tabs
+        document.querySelectorAll('.deck-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                window.MapSystem.activeDeckTab = parseInt(tab.dataset.deck);
+                window.MapSystem.renderFullscreenMap(this);
+            });
+        });
+
+        // Ability Tray Elements
+        this.slotGrapple = document.getElementById('abilityGrapple');
+        this.slotGrenade = document.getElementById('abilityGrenade');
+        this.slotGrenadeCount = document.getElementById('slotGrenadeCount');
+        this.slotPortal = document.getElementById('abilityPortal');
+        this.slotVisor = document.getElementById('abilityVisor');
+        this.slotDashName = document.getElementById('slotDashName');
     }
 
     initInputs() {
@@ -100,6 +135,20 @@ class ChronoGame {
             window.AudioEngine.init();
             window.AudioEngine.resume();
 
+            // Map Toggle (M or Tab)
+            if (e.code === 'KeyM' || e.code === 'Tab') {
+                e.preventDefault();
+                window.MapSystem.toggleMap(this);
+                return;
+            }
+
+            // Close Map with Escape
+            if (window.MapSystem.isOpen && e.code === 'Escape') {
+                e.preventDefault();
+                window.MapSystem.toggleMap(this);
+                return;
+            }
+
             // Dialogue Advance
             if (this.state === 'DIALOGUE') {
                 if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'Enter') {
@@ -109,13 +158,21 @@ class ChronoGame {
                 }
             }
 
-            // In-Game Shortcuts
+            // In-Game Shortcuts & Ability Hotkeys
             if (this.state === 'PLAYING') {
                 if (e.code === 'Space') {
                     e.preventDefault();
                     this.executePhaseShift();
                 } else if (e.code === 'KeyE') {
                     this.handleInteract();
+                } else if (e.code === 'KeyQ') {
+                    this.fireGrenade();
+                } else if (e.code === 'KeyF') {
+                    this.fireGrapple();
+                } else if (e.code === 'KeyR') {
+                    this.firePortal();
+                } else if (e.code === 'KeyV') {
+                    this.toggleVisor();
                 } else if (e.code === 'Escape') {
                     this.pauseGame();
                 }
@@ -176,19 +233,42 @@ class ChronoGame {
         this.stats.enemiesKilled = 0;
         this.bossDefeated = false;
 
-        this.player = new Player(220, 900);
+        this.player = new Player(450, 2250);
         this.projectiles = [];
-        this.levelManager.loadSector(1, this.player);
+        this.levelManager.loadDeck(1, this.player);
         this.state = 'PLAYING';
 
         window.AudioEngine.init();
-        window.AudioEngine.setMusicMode('explore');
+        window.AudioEngine.setMusicMode('exploration');
         window.AudioEngine.setTimeline('past');
 
         // Trigger opening intro cutscene
         setTimeout(() => {
             this.playCutscene('intro');
         }, 400);
+    }
+
+    continueGame() {
+        this.startScreen.style.display = 'none';
+        this.gameOverScreen.style.display = 'none';
+        this.victoryScreen.style.display = 'none';
+        this.pauseScreen.style.display = 'none';
+
+        this.player = new Player(450, 2250);
+        this.projectiles = [];
+        this.state = 'PLAYING';
+
+        window.AudioEngine.init();
+        window.AudioEngine.setMusicMode('exploration');
+
+        const loaded = window.SaveSystem ? window.SaveSystem.loadGame(this) : false;
+        if (!loaded) {
+            this.levelManager.loadDeck(1, this.player);
+        }
+        window.AudioEngine.setTimeline(this.player.currentTimeline || 'past');
+        this.engine.setTimeline(this.player.currentTimeline || 'past', this.player.x, this.player.y);
+        this.timelineBadge.innerText = (this.player.currentTimeline === 'past') ? "T-0 : PRISTINE PAST" : "T+60 : RUINED VOID";
+        this.timelineBadge.className = (this.player.currentTimeline === 'past') ? "timeline-past" : "timeline-future";
     }
 
     pauseGame() {
@@ -209,14 +289,20 @@ class ChronoGame {
         this.pauseScreen.style.display = 'none';
         this.gameOverScreen.style.display = 'none';
         this.projectiles = [];
-        this.levelManager.loadSector(this.levelManager.currentSector, this.player);
-        this.player.hp = this.player.maxHp;
-        this.player.energy = this.player.maxEnergy;
-        this.player.currentTimeline = 'past';
-        this.engine.setTimeline('past', this.player.x, this.player.y);
-        window.AudioEngine.setTimeline('past');
-        this.timelineBadge.innerText = "T-0 : PRISTINE PAST";
-        this.timelineBadge.className = "timeline-past";
+        let loaded = false;
+        if (window.SaveSystem && window.SaveSystem.hasSave()) {
+            loaded = window.SaveSystem.loadGame(this);
+        }
+        if (!loaded) {
+            this.levelManager.loadDeck(this.levelManager.currentDeck || 1, this.player);
+            this.player.hp = this.player.maxHp;
+            this.player.energy = this.player.maxEnergy;
+            this.player.currentTimeline = 'past';
+        }
+        this.engine.setTimeline(this.player.currentTimeline, this.player.x, this.player.y);
+        window.AudioEngine.setTimeline(this.player.currentTimeline);
+        this.timelineBadge.innerText = (this.player.currentTimeline === 'past') ? "T-0 : PRISTINE PAST" : "T+60 : RUINED VOID";
+        this.timelineBadge.className = (this.player.currentTimeline === 'past') ? "timeline-past" : "timeline-future";
         this.state = 'PLAYING';
     }
 
@@ -281,27 +367,176 @@ class ChronoGame {
             this.engine.addTrauma(0.3);
             this.engine.spawnBurst(this.player.x, this.player.y, '#00f0ff', 12, 120);
         } else {
-            // Regular shot
-            const speed = 620;
-            this.projectiles.push(new Projectile(this.player.x, this.player.y, Math.cos(this.player.angle) * speed, Math.sin(this.player.angle) * speed, {
-                isPlayer: true,
-                isCharged: false,
-                damage: 22,
-                timeline: this.player.currentTimeline,
-                color: this.player.currentTimeline === 'past' ? '#00f0ff' : '#d900ff',
-                radius: 4,
-                life: 1.0
-            }));
-            window.AudioEngine.playBlaster(false);
+            // Weapon Tiers (Metroidvania Upgrades)
+            const tier = this.player.weaponTier || 1;
+            const timeline = this.player.currentTimeline;
+            const col = timeline === 'past' ? '#00f0ff' : '#d900ff';
+
+            if (tier === 1) {
+                // Tier 1: Kinetic Plasma Blaster
+                this.projectiles.push(new Projectile(this.player.x, this.player.y, Math.cos(this.player.angle) * 620, Math.sin(this.player.angle) * 620, {
+                    isPlayer: true,
+                    damage: 22,
+                    timeline: timeline,
+                    color: col,
+                    radius: 4,
+                    life: 1.0
+                }));
+                window.AudioEngine.playBlaster(false);
+            } else if (tier === 2) {
+                // Tier 2: Chrono Scatter Tri-Beam
+                [-0.14, 0, 0.14].forEach(off => {
+                    const a = this.player.angle + off;
+                    this.projectiles.push(new Projectile(this.player.x, this.player.y, Math.cos(a) * 640, Math.sin(a) * 640, {
+                        isPlayer: true,
+                        damage: 18,
+                        timeline: timeline,
+                        color: '#ffff00',
+                        radius: 4.5,
+                        life: 1.0
+                    }));
+                });
+                window.AudioEngine.playBlaster(false);
+            } else if (tier === 3) {
+                // Tier 3: Tachyon Continuous Railgun
+                this.projectiles.push(new Projectile(this.player.x, this.player.y, Math.cos(this.player.angle) * 920, Math.sin(this.player.angle) * 920, {
+                    isPlayer: true,
+                    isCharged: true,
+                    damage: 55,
+                    timeline: 'both',
+                    color: '#ff0055',
+                    radius: 6,
+                    life: 1.1
+                }));
+                window.AudioEngine.playBlaster(true);
+            } else {
+                // Tier 4: Void Singularity Cannon
+                this.projectiles.push(new Projectile(this.player.x, this.player.y, Math.cos(this.player.angle) * 520, Math.sin(this.player.angle) * 520, {
+                    isPlayer: true,
+                    isCharged: true,
+                    damage: 85,
+                    timeline: 'both',
+                    color: '#d900ff',
+                    radius: 9,
+                    life: 1.3
+                }));
+                window.AudioEngine.playBossRoar();
+            }
         }
     }
 
+    fireGrenade() {
+        if (!this.player.unlockedAbilities.grenade) {
+            this.engine.addFloatingText("LOCKED: CHRONAL EMP GRENADE NOT ACQUIRED", this.player.x, this.player.y - 30, '#888888', 12);
+            return;
+        }
+        if (this.player.grenades <= 0) {
+            this.engine.addFloatingText("OUT OF EMP GRENADES!", this.player.x, this.player.y - 30, '#ff9900', 14);
+            window.AudioEngine.playAlarm();
+            return;
+        }
+        this.player.grenades--;
+        const spd = 420;
+        const g = new Projectile(this.player.x, this.player.y, Math.cos(this.player.angle) * spd, Math.sin(this.player.angle) * spd, {
+            isPlayer: true,
+            isGrenade: true,
+            damage: 130,
+            radius: 8,
+            color: '#ff9900',
+            life: 0.95
+        });
+        this.projectiles.push(g);
+        window.AudioEngine.playEnemyShot();
+        this.engine.addFloatingText("EMP THROWN!", this.player.x, this.player.y - 25, '#ff9900', 14);
+    }
+
+    fireGrapple() {
+        if (!this.player.unlockedAbilities.grapple) {
+            this.engine.addFloatingText("LOCKED: TACHYON TETHER NOT ACQUIRED", this.player.x, this.player.y - 30, '#888888', 12);
+            return;
+        }
+        if (this.player.isGrappling) {
+            this.player.isGrappling = false;
+            this.player.grappleTarget = null;
+            return;
+        }
+
+        const nodes = this.levelManager.grappleNodes || [];
+        let nearest = null;
+        let minDist = 380;
+        nodes.forEach(n => {
+            if (n.timeline === 'both' || n.timeline === this.player.currentTimeline) {
+                const d = Math.hypot(n.x - this.player.x, n.y - this.player.y);
+                if (d < minDist) {
+                    minDist = d;
+                    nearest = n;
+                }
+            }
+        });
+
+        if (nearest) {
+            this.player.isGrappling = true;
+            this.player.grappleTarget = nearest;
+            window.AudioEngine.playDash();
+            this.engine.spawnBurst(this.player.x, this.player.y, '#00ffff', 14, 120);
+            this.engine.addFloatingText("TETHER LOCKED!", this.player.x, this.player.y - 25, '#00ffff', 14);
+        } else {
+            this.engine.addFloatingText("NO ANCHOR NODE IN RANGE (380m)", this.player.x, this.player.y - 25, '#888888', 12);
+        }
+    }
+
+    firePortal() {
+        if (!this.player.unlockedAbilities.portals) {
+            this.engine.addFloatingText("LOCKED: QUANTUM PORTALS NOT ACQUIRED", this.player.x, this.player.y - 30, '#888888', 12);
+            return;
+        }
+        const mouseWorld = this.engine.screenToWorld(this.input.mouseX, this.input.mouseY);
+        if (this.levelManager.checkWallCollision(mouseWorld.x, mouseWorld.y, 20, this.player.currentTimeline)) {
+            this.engine.addFloatingText("CANNOT WEAVE WORMHOLE IN SOLID BULKHEAD", mouseWorld.x, mouseWorld.y - 20, '#ff00aa', 12);
+            return;
+        }
+        this.levelManager.spawnPortalPair(this.player.x, this.player.y, mouseWorld.x, mouseWorld.y);
+        window.AudioEngine.playPhaseShift(true);
+        this.engine.addFloatingText("WORMHOLE WEAVED!", mouseWorld.x, mouseWorld.y - 20, '#00f0ff', 14);
+    }
+
+    toggleVisor() {
+        if (!this.player.unlockedAbilities.visor) {
+            this.engine.addFloatingText("LOCKED: SPECTRAL VISOR NOT ACQUIRED", this.player.x, this.player.y - 30, '#888888', 12);
+            return;
+        }
+        this.player.visorActive = !this.player.visorActive;
+        window.AudioEngine.playTerminal();
+        this.engine.addFloatingText(this.player.visorActive ? "SPECTRAL VISOR: ONLINE" : "SPECTRAL VISOR: OFFLINE", this.player.x, this.player.y - 30, '#00ffaa', 16);
+    }
+
     handleInteract() {
-        // Check nearby terminals
+        // 1. Check nearby save stations
+        if (this.nearbySaveStation) {
+            this.nearbySaveStation.activate(this);
+            return;
+        }
+
+        // 2. Check nearby terminals
         if (this.nearbyTerminal) {
+            // Check causality seed terminal in Deck 2
+            if (this.nearbyTerminal.id === 'term_2_spore_terminal') {
+                if (!this.levelManager.causalitySwitches.has('hydro_spore_planted')) {
+                    this.levelManager.causalitySwitches.add('hydro_spore_planted');
+                    this.engine.spawnBurst(this.nearbyTerminal.x, this.nearbyTerminal.y, '#00ff88', 35, 200);
+                    this.engine.addFloatingText("HYDRO-SPORE PLANTED! CAUSALITY ALTERED IN FUTURE!", this.player.x, this.player.y - 45, '#00ff88', 18);
+                    window.AudioEngine.playPickup();
+                    this.levelManager.loadDeck(2, this.player, this.player.x, this.player.y);
+                    if (window.SaveSystem) window.SaveSystem.saveGame(this);
+                    return;
+                }
+            }
+
             const log = STORY_DATA.terminals[this.nearbyTerminal.id];
             if (log) {
                 this.nearbyTerminal.isRead = true;
+                this.levelManager.readLogs = this.levelManager.readLogs || new Set();
+                this.levelManager.readLogs.add(this.nearbyTerminal.id);
                 this.playLog(log);
                 window.AudioEngine.playTerminal();
             }
@@ -413,14 +648,14 @@ class ChronoGame {
                     }
                 }
 
-                // Boss
+                // Boss / Mini-Boss
                 if (this.levelManager.boss) {
                     const boss = this.levelManager.boss;
                     const dist = Math.hypot(boss.x - proj.x, boss.y - proj.y);
                     if (dist < boss.radius + proj.radius) {
                         const bossDead = boss.takeDamage(proj.damage, this.engine);
                         if (bossDead) {
-                            this.handleBossDefeat();
+                            this.handleBossDefeat(boss);
                         }
                         if (!proj.isCharged) {
                             this.projectiles.splice(i, 1);
@@ -465,8 +700,7 @@ class ChronoGame {
 
         // Hazard damage check
         this.levelManager.hazards.forEach(h => {
-            if (h.timeline === this.player.currentTimeline) {
-                // Player inside hazard box
+            if (h.timeline === this.player.currentTimeline || h.timeline === 'both') {
                 if (this.player.x >= h.x && this.player.x <= h.x + h.w &&
                     this.player.y >= h.y && this.player.y <= h.y + h.h) {
                     this.player.takeDamage(h.damage * dt, this.engine, true);
@@ -490,6 +724,34 @@ class ChronoGame {
                 this.levelManager.pickups.splice(i, 1);
             }
         }
+
+        // Save Stations proximity check
+        this.nearbySaveStation = null;
+        this.levelManager.saveStations.forEach(save => {
+            const dist = Math.hypot(this.player.x - save.x, this.player.y - save.y);
+            if (dist < this.player.radius + save.radius + 15) {
+                this.nearbySaveStation = save;
+            }
+        });
+
+        // Upgrades collection check
+        for (let i = this.levelManager.upgrades.length - 1; i >= 0; i--) {
+            const up = this.levelManager.upgrades[i];
+            const dist = Math.hypot(this.player.x - up.x, this.player.y - up.y);
+            if (dist < this.player.radius + up.radius) {
+                up.collect(this);
+                this.levelManager.upgrades.splice(i, 1);
+            }
+        }
+
+        // Portal Gates check
+        this.levelManager.portalGates.forEach(portal => {
+            portal.update(dt);
+            const dist = Math.hypot(this.player.x - portal.x, this.player.y - portal.y);
+            if (dist < this.player.radius + portal.radius) {
+                portal.teleport(this.player, this.engine);
+            }
+        });
 
         // Chrono Pylons overload check
         this.levelManager.pylons.forEach(pylon => {
@@ -516,39 +778,29 @@ class ChronoGame {
         if (exit && exit.active) {
             const dist = Math.hypot(this.player.x - exit.x, this.player.y - exit.y);
             if (dist < this.player.radius + exit.radius) {
-                this.advanceToNextSector();
+                this.advanceToDeck(exit.targetDeck, exit.spawnX, exit.spawnY);
             }
         }
     }
 
     checkPylonProgression() {
-        const sector = this.levelManager.currentSector;
-        if (sector === 2) {
-            const allOverloaded = this.levelManager.pylons.every(p => p.overloaded);
-            if (allOverloaded && this.levelManager.exitPortal) {
-                this.levelManager.exitPortal.active = true;
-                this.levelManager.objectiveText = "Singularity Reactor Airlock is open! Proceed to the Warp Lift.";
-                this.levelManager.objectiveTarget = { x: this.levelManager.exitPortal.x, y: this.levelManager.exitPortal.y };
-                this.engine.addFloatingText("SECTOR 3 AIRLOCK OPEN!", this.player.x, this.player.y - 40, '#00ffaa', 20);
-                window.AudioEngine.playAlarm();
-            }
-        } else if (sector === 3 && this.levelManager.boss) {
+        const deck = this.levelManager.currentDeck;
+        if (deck === 5 && this.levelManager.boss) {
             const overloadedCount = this.levelManager.pylons.filter(p => p.overloaded).length;
             if (overloadedCount >= 4 && this.levelManager.boss.shieldActive) {
                 this.levelManager.boss.shieldActive = false;
-                this.engine.addFloatingText("BOSS SHIELD SHATTERED! ATTACK THE CORE!", this.player.x, this.player.y - 50, '#ff0055', 20);
-                this.engine.addTrauma(0.6);
+                this.engine.addFloatingText("PARADOX NEXUS SHIELD SHATTERED! STRIKE THE CORE!", this.player.x, this.player.y - 50, '#ff0055', 22);
+                this.engine.addTrauma(0.7);
                 window.AudioEngine.playBossRoar();
             }
         }
     }
 
-    advanceToNextSector() {
-        const nextSector = this.levelManager.currentSector + 1;
-        if (nextSector <= 3) {
-            this.engine.spawnBurst(this.player.x, this.player.y, '#00ffaa', 30, 250);
+    advanceToDeck(targetDeck, spawnX = null, spawnY = null) {
+        if (targetDeck >= 1 && targetDeck <= 5) {
+            this.engine.spawnBurst(this.player.x, this.player.y, '#00ffaa', 35, 250);
             window.AudioEngine.playTerminal();
-            this.levelManager.loadSector(nextSector, this.player);
+            this.levelManager.loadDeck(targetDeck, this.player, spawnX, spawnY);
             this.projectiles = [];
             this.player.currentTimeline = 'past';
             this.engine.setTimeline('past', this.player.x, this.player.y);
@@ -556,21 +808,60 @@ class ChronoGame {
             this.timelineBadge.innerText = "T-0 : PRISTINE PAST";
             this.timelineBadge.className = "timeline-past";
 
-            if (nextSector === 3) {
+            if (targetDeck === 5) {
                 setTimeout(() => {
                     this.playCutscene('boss_intro');
                 }, 500);
             }
+            if (window.SaveSystem) {
+                window.SaveSystem.saveGame(this);
+            }
         }
     }
 
-    handleBossDefeat() {
+    handleBossDefeat(boss) {
+        if (boss && boss.isMiniBoss) {
+            this.engine.spawnBurst(boss.x, boss.y, '#ffffff', 60, 300);
+            window.AudioEngine.playExplosion(true);
+            this.engine.addTrauma(0.7);
+
+            if (boss.deck === 1) {
+                this.levelManager.unlockedDoors.add('overseer_defeated');
+                this.levelManager.unlockedDoors.add('door_deck1_exit');
+                if (this.levelManager.exitPortal) this.levelManager.exitPortal.active = true;
+                this.levelManager.upgrades.push(new UpgradeItem(boss.x, boss.y, 'upgrade_weapon_scatter', 'weapon_scatter', 'CHRONO SCATTER TRI-BEAM'));
+                this.engine.addFloatingText("OVERSEER DESTROYED // DECK 2 ELEVATOR UNLOCKED!", boss.x, boss.y - 60, '#ffaa00', 20);
+                this.levelManager.objectiveText = "Deck 2 Elevator is operational. Proceed to the Hydro-Silos.";
+                this.levelManager.objectiveTarget = { x: 6600, y: 2250 };
+            } else if (boss.deck === 2) {
+                this.levelManager.unlockedDoors.add('chronoflora_defeated');
+                this.levelManager.unlockedDoors.add('door_deck2_exit');
+                if (this.levelManager.exitPortal) this.levelManager.exitPortal.active = true;
+                this.levelManager.upgrades.push(new UpgradeItem(boss.x, boss.y, 'upgrade_energy_1', 'energy_tank', '+25 CHRONO TANK'));
+                this.engine.addFloatingText("CHRONO-FLORA ERADICATED // DECK 3 ACCELERATOR UNLOCKED!", boss.x, boss.y - 60, '#00ff88', 20);
+                this.levelManager.objectiveText = "Deck 3 Accelerator Gate unlocked! Proceed to Tachyon Grav-Labs.";
+                this.levelManager.objectiveTarget = { x: 6600, y: 2250 };
+            } else if (boss.deck === 3) {
+                this.levelManager.unlockedDoors.add('gravgoliath_defeated');
+                this.levelManager.unlockedDoors.add('door_deck3_exit');
+                if (this.levelManager.exitPortal) this.levelManager.exitPortal.active = true;
+                this.levelManager.upgrades.push(new UpgradeItem(boss.x, boss.y, 'upgrade_weapon_rail', 'weapon_rail', 'TACHYON RAILGUN'));
+                this.engine.addFloatingText("GRAV-GOLIATH DESTROYED // DECK 4 BREACH UNLOCKED!", boss.x, boss.y - 60, '#7700ff', 20);
+                this.levelManager.objectiveText = "Grav-Goliath destroyed! Proceed through Deck 4 Hull Breach.";
+                this.levelManager.objectiveTarget = { x: 6600, y: 2250 };
+            }
+            this.levelManager.boss = null;
+            if (window.SaveSystem) window.SaveSystem.saveGame(this);
+            return;
+        }
+
+        // Grand Climax Boss: Paradox Nexus (Deck 5)
         if (this.bossDefeated) return;
         this.bossDefeated = true;
         this.state = 'DIALOGUE';
         this.levelManager.boss = null;
         this.projectiles = []; // Clear lingering projectiles
-        this.engine.spawnBurst(1350, 1100, '#ffffff', 80, 400);
+        this.engine.spawnBurst(4200, 2250, '#ffffff', 80, 400);
 
         this.playCutscene('boss_defeat', () => {
             this.showVictoryScreen();
@@ -611,18 +902,25 @@ class ChronoGame {
         // 1. Dual-Timeline Background Grid
         this.engine.renderBackground(this.levelManager);
 
-        // 2. Level Geometry & Hazards
-        this.levelManager.render(ctx, this.player.currentTimeline);
+        // 2. Level Geometry & Hazards (Spectral Visor reveals hidden cracks)
+        this.levelManager.render(ctx, this.player.currentTimeline, this.player.visorActive);
 
         // 3. Interactive Objects
         this.levelManager.terminals.forEach(t => t.render(ctx, this.player.currentTimeline));
         this.levelManager.pylons.forEach(p => p.render(ctx, this.player.currentTimeline));
         this.levelManager.pickups.forEach(p => p.render(ctx));
+        this.levelManager.saveStations.forEach(s => s.render(ctx));
+        this.levelManager.grappleNodes.forEach(g => {
+            const inRange = (Math.hypot(this.player.x - g.x, this.player.y - g.y) < 380);
+            g.render(ctx, this.player.currentTimeline, inRange);
+        });
+        this.levelManager.portalGates.forEach(p => p.render(ctx));
+        this.levelManager.upgrades.forEach(u => u.render(ctx));
 
         // 4. Enemies & Boss
         this.levelManager.enemies.forEach(e => e.render(ctx, this.player.currentTimeline));
         if (this.levelManager.boss) {
-            this.levelManager.boss.render(ctx);
+            this.levelManager.boss.render(ctx, this.player.currentTimeline);
         }
 
         // 5. Projectiles
@@ -630,6 +928,23 @@ class ChronoGame {
 
         // 6. Player
         this.player.render(ctx);
+
+        // Interactive Prompt when standing near a save station
+        if (this.nearbySaveStation) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(4, 28, 16, 0.9)';
+            ctx.strokeStyle = '#00ffaa';
+            ctx.lineWidth = 1.5;
+            ctx.fillRect(this.nearbySaveStation.x - 60, this.nearbySaveStation.y - 50, 120, 24);
+            ctx.strokeRect(this.nearbySaveStation.x - 60, this.nearbySaveStation.y - 50, 120, 24);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = '#00ffaa';
+            ctx.shadowBlur = 6;
+            ctx.fillText('[E] SAVE DATA', this.nearbySaveStation.x, this.nearbySaveStation.y - 34);
+            ctx.restore();
+        }
 
         // Interactive Prompt when standing near a terminal
         if (this.nearbyTerminal) {
@@ -701,11 +1016,45 @@ class ChronoGame {
         // Objective text
         this.objectiveText.innerText = this.levelManager.objectiveText;
 
-        // Boss Bar (Sector 3)
+        // Ability Tray Slot Updates
+        if (this.slotDashName) {
+            this.slotDashName.innerText = this.player.unlockedAbilities.phaseDash ? "PHASE-DASH" : "DASH";
+        }
+        if (this.slotGrapple) {
+            this.slotGrapple.classList.toggle('active', !!this.player.unlockedAbilities.grapple);
+            this.slotGrapple.classList.toggle('locked', !this.player.unlockedAbilities.grapple);
+        }
+        if (this.slotGrenade) {
+            this.slotGrenade.classList.toggle('active', !!this.player.unlockedAbilities.grenade);
+            this.slotGrenade.classList.toggle('locked', !this.player.unlockedAbilities.grenade);
+            if (this.slotGrenadeCount) {
+                this.slotGrenadeCount.innerText = `x${this.player.grenades || 0}`;
+            }
+        }
+        if (this.slotPortal) {
+            this.slotPortal.classList.toggle('active', !!this.player.unlockedAbilities.portals);
+            this.slotPortal.classList.toggle('locked', !this.player.unlockedAbilities.portals);
+        }
+        if (this.slotVisor) {
+            this.slotVisor.classList.toggle('active', !!this.player.unlockedAbilities.visor);
+            this.slotVisor.classList.toggle('locked', !this.player.unlockedAbilities.visor);
+            this.slotVisor.style.borderColor = this.player.visorActive ? '#00ffaa' : '';
+        }
+
+        // Minimap Render
+        if (this.minimapCtx && window.MapSystem) {
+            window.MapSystem.renderMinimap(this.minimapCtx, this);
+        }
+
+        // Boss Bar
         if (this.levelManager.boss) {
             this.bossContainer.style.display = 'flex';
             const bossPct = (this.levelManager.boss.hp / this.levelManager.boss.maxHp) * 100;
             this.bossHpFill.style.width = `${Math.max(0, bossPct)}%`;
+            const nameEl = document.getElementById('bossName');
+            if (nameEl && this.levelManager.boss.name) {
+                nameEl.innerText = this.levelManager.boss.name.toUpperCase();
+            }
         } else {
             this.bossContainer.style.display = 'none';
         }

@@ -41,7 +41,14 @@
 
             <!-- Right Controls & Objective Tracker Group -->
             <div class="hud-right-group">
-                <button id="audioToggleBtn" title="Toggle Sound">🔊 AUDIO: ON</button>
+                <div class="hud-top-actions">
+                    <button id="mapToggleBtn" class="hud-small-btn" title="Toggle Full World Map">🗺️ MAP [M]</button>
+                    <button id="audioToggleBtn" class="hud-small-btn" title="Toggle Sound">🔊 AUDIO: ON</button>
+                </div>
+                <!-- Minimap Widget -->
+                <div class="minimap-container">
+                    <canvas id="minimapCanvas" width="160" height="100"></canvas>
+                </div>
                 <div class="objective-container">
                     <div class="objective-header">CURRENT DIRECTIVE</div>
                     <div id="objectiveText">Initializing UNIT-7 chassis...</div>
@@ -57,10 +64,40 @@
             </div>
         </div>
 
-        <!-- Controls Hint -->
-        <div class="controls-hint">
-            <strong>CONTROLS:</strong> [WASD] Move | [MOUSE] Aim | [LEFT CLICK] Shoot (Hold to Charge)<br>
-            [SPACE / RIGHT CLICK] Phase Shift | [SHIFT / F] Thruster Dash | [E] Terminal / Next
+        <!-- Bottom HUD: Ability Tray & Controls Hint -->
+        <div class="hud-bottom-row">
+            <div class="ability-tray">
+                <div id="abilityPhase" class="ability-slot active" title="Phase Shift">
+                    <span class="slot-key">SPACE</span>
+                    <span class="slot-name">PHASE</span>
+                </div>
+                <div id="abilityDash" class="ability-slot active" title="Thruster Dash">
+                    <span class="slot-key">SHIFT</span>
+                    <span id="slotDashName" class="slot-name">DASH</span>
+                </div>
+                <div id="abilityGrapple" class="ability-slot locked" title="Tachyon Tether Grapple">
+                    <span class="slot-key">F</span>
+                    <span class="slot-name">GRAPPLE</span>
+                </div>
+                <div id="abilityGrenade" class="ability-slot locked" title="Chronal EMP Grenade">
+                    <span class="slot-key">Q</span>
+                    <span id="slotGrenadeCount" class="slot-name">EMP (0)</span>
+                </div>
+                <div id="abilityPortal" class="ability-slot locked" title="Quantum Portal Weaver">
+                    <span class="slot-key">R</span>
+                    <span class="slot-name">PORTAL</span>
+                </div>
+                <div id="abilityVisor" class="ability-slot locked" title="Chronal Spectral Visor">
+                    <span class="slot-key">V</span>
+                    <span class="slot-name">VISOR</span>
+                </div>
+            </div>
+
+            <!-- Controls Hint -->
+            <div class="controls-hint">
+                <strong>METROIDVANIA CONTROLS:</strong> [WASD] Move • [MOUSE] Aim/Shoot • [SPACE] Phase Shift<br>
+                [SHIFT] Dash • [F] Grapple • [Q] EMP Grenade • [R] Portal • [V] Visor • [M] Map • [E] Interact
+            </div>
         </div>
     </div>
 
@@ -87,6 +124,7 @@
         </div>
 
         <div class="menu-actions">
+            <button id="continueBtn" class="cyber-btn" style="display: none; border-color: #00ffaa; color: #00ffaa;">CONTINUE MISSION [SAVE FOUND]</button>
             <button id="startBtn" class="cyber-btn">INITIALIZE NEURAL TETHER</button>
         </div>
     </div>
@@ -142,9 +180,52 @@
         </div>
     </div>
 
+    <!-- 8. Fullscreen Metroidvania World Map Modal [M] -->
+    <div id="mapModal" class="modal-screen" style="display: none;">
+        <div class="map-modal-content">
+            <div class="map-header">
+                <div>
+                    <h2 class="map-title">U.S.S. NOMOS // STATION CARTHOGRAPHY</h2>
+                    <div id="mapDeckTitle" class="map-deck-subtitle">DECK 1: CRYO-STASIS HUB</div>
+                </div>
+                <div class="map-stats-badge">
+                    <span class="map-stat-label">EXPLORATION:</span>
+                    <span id="mapCompletionVal" class="map-stat-val">0%</span>
+                </div>
+                <button id="closeMapBtn" class="hud-small-btn">CLOSE [M / ESC]</button>
+            </div>
+
+            <!-- Deck Selector Tabs -->
+            <div class="deck-tabs">
+                <button class="deck-tab active" data-deck="1">DECK 1: CRYO HUB</button>
+                <button class="deck-tab" data-deck="2">DECK 2: BIOLAB</button>
+                <button class="deck-tab" data-deck="3">DECK 3: GRAV-LABS</button>
+                <button class="deck-tab" data-deck="4">DECK 4: VOID RIFT</button>
+                <button class="deck-tab" data-deck="5">DECK 5: CRUCIBLE</button>
+            </div>
+
+            <!-- Map Grid Display -->
+            <div class="map-canvas-container">
+                <canvas id="fullMapCanvas" width="800" height="420"></canvas>
+            </div>
+
+            <!-- Legend -->
+            <div class="map-legend">
+                <div class="legend-item"><span class="legend-color" style="border-color: #00f0ff;"></span> Explored Room</div>
+                <div class="legend-item"><span class="legend-color" style="border-color: #00ffaa;">[S]</span> Save Pod</div>
+                <div class="legend-item"><span class="legend-color" style="border-color: #ffff00;">[?]</span> Upgrade Vault</div>
+                <div class="legend-item"><span class="legend-color" style="border-color: #d900ff;">[O]</span> Transit Elevator</div>
+                <div class="legend-item"><span class="legend-color" style="border-color: #ff0055;">[!]</span> Boss Arena</div>
+                <div class="legend-item"><span class="legend-dot"></span> Current Location</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts in logical execution order -->
     <script src="js/audio.js"></script>
     <script src="js/engine.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/map.js"></script>
     <script src="js/entities.js"></script>
     <script src="js/story.js"></script>
     <script src="js/levels.js"></script>

@@ -67,6 +67,94 @@ const STORY_DATA = {
                 "Its defensive shields are anchored in both timelines. Overload the 4 Chrono-Pylons across the room to expose its core!",
                 "UNIT-7 neural buffer synchronization at 99.8%... Dr. Ward? Is that... you?"
             ]
+        },
+        'term_1_vault': {
+            sender: 'SECURITY OVERSEER // LOG ENTRY 9',
+            title: 'DATA VAULT ENCRYPTION',
+            portrait: 'vance',
+            color: '#ffaa00',
+            lines: [
+                "Containment protocol engaged for Sector 1 server banks.",
+                "Reinforced armor plates deployed to shield the secondary neural core.",
+                "Hull expansion container cached at coordinates. Authorized personnel only."
+            ]
+        },
+        'term_1_shaft': {
+            sender: 'ENGINEERING COMM // LIFT MONITORS',
+            title: 'TRANSIT ELEVATOR SECTOR 2',
+            portrait: 'elena',
+            color: '#00f0ff',
+            lines: [
+                "Elevator to Deck 2 locked behind the Maintenance Overseer security loop.",
+                "To reboot transit: defeat the rogue Overseer Mech at the end of the central gantry."
+            ]
+        },
+        'term_2_seed_manual': {
+            sender: 'BOTANY LAB // ARCHIVE #44',
+            title: 'TACHYON HYDRO-SPORE REPRODUCTION',
+            portrait: 'elena',
+            color: '#00ff88',
+            lines: [
+                "Note on Project Chrono-Flora: The genetically spliced tachyon vines respond to temporal anchoring.",
+                "If a seed pod is planted in the pristine past (T-0), it will accelerate through six decades of growth in the future (T+60).",
+                "Its calcified vines can bridge entire chasms and acid lakes!"
+            ]
+        },
+        'term_2_spore_terminal': {
+            sender: 'INCUBATOR RELAY // SEED CONTROL',
+            title: 'CAUSALITY SEED DISPENSER',
+            portrait: 'atlas',
+            color: '#00ff88',
+            lines: [
+                "Incubator primed with active Tachyon Hydro-Spore.",
+                "Interacting with this console in the Past will plant the spore.",
+                "Within sixty minutes in the ruined future, massive bioluminescent vines will bridge the acid trench."
+            ]
+        },
+        'term_3_goliath': {
+            sender: 'CHIEF PHYSICIST KAUFMAN // LOG 801',
+            title: 'GRAVITON GOLIATH CONTAINMENT',
+            portrait: 'vance',
+            color: '#7700ff',
+            lines: [
+                "The Goliath was designed to stabilize the Tachyon singularity.",
+                "Now that spacetime has fractured, its grav-plates are firing in reverse.",
+                "Do not engage without EMP disruption grenades to short-circuit its magnetic shielding."
+            ]
+        },
+        'term_4_rift': {
+            sender: 'A.T.L.A.S. // SUB-HULL TELEMETRY',
+            title: 'SPACETIME CLEAVAGE REPORT',
+            portrait: 'atlas',
+            color: '#d900ff',
+            lines: [
+                "Warning: Hull breach detected in Sector 4. Outer space exposure.",
+                "Phase-Dash Matrix required to pass through electrified high-voltage fields without taking kinetic damage.",
+                "The Spectral Visor will reveal dimensional tears and invisible anomaly platforms."
+            ]
+        },
+        'term_5_maya': {
+            sender: 'DR. ELENA WARD // FINAL WILL & TESTAMENT',
+            title: 'THE PARADOX OF UNIT-7',
+            portrait: 'elena',
+            color: '#00ffaa',
+            lines: [
+                "If you are reading this through UNIT-7's optical sensors...",
+                "You are me. Before the singularity crushed my mortal body, I transferred my neural engram into this chassis.",
+                "I stayed behind so you could pull Maya out of Stasis Pod 404.",
+                "Break the loop, Elena. Save our daughter."
+            ]
+        },
+        'term_5_chamber_404': {
+            sender: 'STASIS POD #404 TELEMETRY',
+            title: 'MAYA WARD // VITAL SIGNS: STABLE',
+            portrait: 'elena',
+            color: '#00ffaa',
+            lines: [
+                "Occupant: Maya Ward. Age: 7. Cryo-Stasis suspension optimal.",
+                "Heart rate: 12 bpm. Brainwave activity: Dream state alpha.",
+                "Singularity shield holding. Destroy the Paradox Nexus to initiate escape launch!"
+            ]
         }
     },
 
